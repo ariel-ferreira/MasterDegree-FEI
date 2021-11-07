@@ -3,11 +3,13 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+# from keras.models import load_model
 # from IPython.display import display, Audio
 
 
-DATASET_ROOT = os.path.join(os.path.expanduser("~"), '''Documents/Mestrado/traba
-                            lho/redeNeural/agender_distribution/''')
+DATASET_ROOT = os.path.join(
+    os.path.expanduser("~"),
+    'Documents/01-Mestrado/02-Trabalho/redeNeural/agender_distribution/')
 
 VALID_SPLIT = 0.1  # Percentage of samples to use for validation
 SAMPLING_RATE = 8000
@@ -17,7 +19,6 @@ EPOCHS = 100
 
 
 def paths_and_labels_to_dataset(audio_paths, labels):
-    """Constructs a dataset of audios and labels."""
     path_ds = tf.data.Dataset.from_tensor_slices(audio_paths)
     audio_ds = path_ds.map(lambda x: path_to_audio(x))
     label_ds = tf.data.Dataset.from_tensor_slices(labels)
@@ -25,7 +26,6 @@ def paths_and_labels_to_dataset(audio_paths, labels):
 
 
 def path_to_audio(path):
-    """Reads and decodes an audio file."""
     audio = tf.io.read_file(path)
     audio, _ = tf.audio.decode_wav(audio, 1, SAMPLING_RATE)
     return audio
@@ -45,7 +45,7 @@ def audio_to_fft(audio):
 
 
 # Read files and split class from file
-file_list = pd.read_csv("train.csv")
+file_list = pd.read_csv('7_class_train.csv')
 audio_files = file_list['file']
 classes = file_list['class']
 
@@ -147,7 +147,7 @@ def build_model(input_shape, num_classes):
     return keras.models.Model(inputs=inputs, outputs=outputs)
 
 
-model = build_model((SAMPLING_RATE // 2, 1), len(class_labels))
+model = build_model((SAMPLING_RATE // 2, 1), len(class_labels)+1)
 
 model.summary()
 
@@ -159,7 +159,7 @@ model.compile(
 # Add callbacks:
 # 'EarlyStopping' to stop training when the model is not enhancing anymore
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
-model_save_filename = "CNN_model.h5"
+model_save_filename = "CNN_model_7_class.h5"
 
 earlystopping_cb = keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True)
@@ -177,5 +177,11 @@ history = model.fit(
 )
 
 
+# Load model
+# model = load_model('CNN_model.h5')
+# model.summary()
+
+
 # Model 's precision
 print(model.evaluate(valid_ds))
+print(model.metrics_names)
