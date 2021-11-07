@@ -1,0 +1,8 @@
+# Com 6 classes, fazendo a validação carregando o modelo treinado anteriormente:
+
+Total params: 1,712,470
+Trainable params: 1,712,470
+Non-trainable params: 0
+__________________________________________________________________________________________________
+[1.2998859882354736, 0.6088193655014038]
+['loss', 'accuracy']
