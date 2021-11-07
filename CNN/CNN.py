@@ -45,7 +45,7 @@ def audio_to_fft(audio):
 
 
 # Read files and split class from file
-file_list = pd.read_csv('train.csv')
+file_list = pd.read_csv('7_class_train.csv')
 audio_files = file_list['file']
 classes = file_list['class']
 
@@ -147,7 +147,7 @@ def build_model(input_shape, num_classes):
     return keras.models.Model(inputs=inputs, outputs=outputs)
 
 
-model = build_model((SAMPLING_RATE // 2, 1), len(class_labels))
+model = build_model((SAMPLING_RATE // 2, 1), len(class_labels)+1)
 
 model.summary()
 

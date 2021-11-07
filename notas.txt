@@ -1,8 +1,32 @@
 # Com 6 classes, fazendo a validação carregando o modelo treinado anteriormente:
 
+Validação = 0.1 da base de treino
+
 Total params: 1,712,470
 Trainable params: 1,712,470
 Non-trainable params: 0
-__________________________________________________________________________________________________
+
 [1.2998859882354736, 0.6088193655014038]
 ['loss', 'accuracy']
+
+# Com 7 classes, fazendo a validação treinando o modelo:
+
+Validação = 0.1 da base de treino
+
+Total params: 1,712,728
+Trainable params: 1,712,728
+Non-trainable params: 0
+
+[1.116835117340088, 0.5538130402565002]
+['loss', 'accuracy']
+[Finished in 6683.54s] = 1h50min
+
+# simulações:
+teste==treino versus teste!=treino
+
+considerando apenas teste!=treino:
+Primeiramente montar a matriz de confusão com as 7 classes.
+- 4 grandes classes (crianças, jovens, adultos e idosos): matriz, precision, recall, F1-score.
+- 3 grandes classes (crianças, homens e mulheres): matriz, precision, recall, F1-score.
+
+- Fazer os mesmos testes, porém remover a classe das crianças.
