@@ -1,0 +1,20 @@
+Teste_ com 100 epocas e 73 de batch: 
+Tempo de Retirada de caracteristicas: 0.44601573909679243
+Tempo de Retirada de caracteristicas (adj): 8096.077696084976
+Tempo de Treino: 222.37165904045105
+Tempo de Teste: 2.8210111313740448e-05
+Tempo de Teste (adj): 0.5120699405670166
+Porcentagem de acerto: 37.4394006170119%
+##########
+Teste_ com 5000 epocas e 143 de batch: 
+Tempo de Treino: 7067.949273347855
+Tempo de Teste: 5.709566750574763e-05
+Tempo de Teste (adj): 1.036400556564331
+Porcentagem de acerto: 36.34310268840899%
+##########
+Teste_ com 100 epocas e 128 de batch: 
+Tempo de Treino: 162.94526505470276
+Tempo de Teste: 2.9258183731072376e-05
+Tempo de Teste (adj): 0.5310945510864258
+Porcentagem de acerto: 34.717937417364475%
+##########

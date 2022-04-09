@@ -1,0 +1,19 @@
+for i in range(len(table_full)):
+    g = table_full.loc[i, 4]
+    if g == 'x':
+        table_full.loc[i, 'class'] = 1
+    a = table_full.loc[i, 3]
+    elif g == 'm':
+        if (15 <= a and a >= 24):
+            table_full.loc(i, 'class') = 3
+        elif (25 <= a and a >= 54):
+            table_full.loc(i, 'class') = 5
+        else:
+            table_full.loc(i, 'class') = 7
+    else:
+        if (15 <= a and a >= 24):
+            table_full.loc(i, 'class') = 2
+        elif (25 <= a and a >= 54):
+            table_full.loc(i, 'class') = 4
+        else:
+            table_full.loc(i, 'class') = 6
