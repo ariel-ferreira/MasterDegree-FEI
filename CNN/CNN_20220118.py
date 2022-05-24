@@ -143,7 +143,7 @@ valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
 # detalhamento do programa
 
 # DEFINIÇÃO do Modelo
-'''
+
 
 def residual_block(x, filters, conv_num=3, activation="relu"):
     # Shortcut
@@ -200,7 +200,7 @@ print(model.evaluate(valid_ds))
 # O trecho a seguir executa as linhas de código destinadas a realizar o teste
 # do modelo. Para essa finalizada utiliza-se novos arquivos que não foram
 # utilizados para a fase de treinamento
-'''
+
 # TESTE do modelo
 
 # A linha de código abaixo serve apenas para quando se quer utilizar parâmetros
@@ -261,6 +261,7 @@ for audios, labels in test_ds:
 
 flatten_labels_list = list(chain(*labels_list))
 flatten_y_pred_list = list(chain(*y_pred_list))
+
 real_output = flatten_labels_list
 predicted_output = flatten_y_pred_list
 
