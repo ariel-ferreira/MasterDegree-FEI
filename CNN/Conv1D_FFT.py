@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import itertools
 import numpy as np
 import os
@@ -14,34 +11,25 @@ from tensorflow import keras
 from keras.models import load_model
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, confusion_matrix
 
-
-# In[ ]:
-
-
-DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
+DATASET_ROOT = os.path.join(
+    os.path.expanduser("~"), 'dataSet/audio/agender_distribution/')
 VALID_SPLIT = 0.1
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
 
-
-# In[ ]:
-
-
 # Read train files and split class from file
-train_file_list = pd.read_csv('7_class_train.csv')
+train_file_list = pd.read_csv(
+    '/home/ariel/github/Conv1D/CNN/file_lists/train_database_full.csv')
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 train_audio_df = pd.DataFrame(train_audio_files)
 train_class_df = pd.DataFrame(train_classes)
 
-
-# In[ ]:
-
-
 # Read test files and split class from file
-test_file_list = pd.read_csv('7_class_test.csv')
+test_file_list = pd.read_csv(
+    '/home/ariel/github/Conv1D/CNN/file_lists/test_database_full.csv')
 test_audio_files = test_file_list['file']
 test_classes = test_file_list['class']
 test_audio_df = pd.DataFrame(test_audio_files)
@@ -50,46 +38,28 @@ test_class_df = pd.DataFrame(test_classes)
 
 # Get the list of audio file paths along with their corresponding labels
 
-# In[ ]:
-
-
 train_class_labels = list(train_classes.unique())
-
-
-# In[ ]:
-
 
 print("Age categories identified: {}".format(train_class_labels,))
 
-
-# In[ ]:
-
-
 # TODO: mostrar tabela identificando cada categotia
-
-
-# In[ ]:
-
 
 audio_paths = []
 labels = []
 
-
-# In[ ]:
-
-
 for label, category in enumerate(train_class_labels):
     print("Processing category {}".format(category,))
-    speaker_sample_paths = [os.path.join(DATASET_ROOT, train_audio_files[i]) for i in range(len(train_audio_files)) if train_classes[i] == category]
+    speaker_sample_paths = [os.path.join(DATASET_ROOT, train_audio_files[i]) for i in range(
+        len(train_audio_files)) if train_classes[i] == category]
     audio_paths += speaker_sample_paths
     labels += [label] * len(speaker_sample_paths)
 
+print("Found {} files belonging to {} classes.".format(
+    len(audio_paths), len(train_class_labels)))
 
-# In[ ]:
+print(labels[:10])
 
-
-print("Found {} files belonging to {} classes.".format(len(audio_paths), len(train_class_labels)))
-
+exit(0)
 
 # Shuffle
 
@@ -108,7 +78,8 @@ rng.shuffle(labels)
 
 
 num_val_samples = int(VALID_SPLIT * len(audio_paths))
-print("Using {} files for training.".format(len(audio_paths) - num_val_samples))
+print("Using {} files for training.".format(
+    len(audio_paths) - num_val_samples))
 print("Using {} files for validation.".format(num_val_samples))
 
 
@@ -150,7 +121,8 @@ def audio_to_fft(audio):
     # we need to squeeze the dimensions and then expand them again
     # after FFT
     audio = tf.squeeze(audio, axis=-1)
-    fft = tf.signal.fft(tf.cast(tf.complex(real=audio, imag=tf.zeros_like(audio)), tf.complex64))
+    fft = tf.signal.fft(
+        tf.cast(tf.complex(real=audio, imag=tf.zeros_like(audio)), tf.complex64))
     fft = tf.expand_dims(fft, axis=-1)
     # Return the absolute value of the first half of the FFT
     # which represents the positive frequencies
@@ -168,7 +140,8 @@ valid_ds = FFT_paths_and_labels_to_dataset(valid_audio_paths, valid_labels)
 # In[ ]:
 
 
-train_ds = train_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+train_ds = train_ds.shuffle(
+    buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
 valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 
 
@@ -177,8 +150,10 @@ valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 # In[ ]:
 
 
-train_ds = train_ds.map(lambda x, y: (audio_to_fft(x), y), num_parallel_calls=tf.data.experimental.AUTOTUNE)
-valid_ds = valid_ds.map(lambda x, y: (audio_to_fft(x), y), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+train_ds = train_ds.map(lambda x, y: (audio_to_fft(x), y),
+                        num_parallel_calls=tf.data.experimental.AUTOTUNE)
+valid_ds = valid_ds.map(lambda x, y: (audio_to_fft(x), y),
+                        num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
 
 # In[ ]:
@@ -222,7 +197,8 @@ def build_model(input_shape, num_classes):
     x = keras.layers.Dense(256, activation="relu")(x)
     x = keras.layers.Dense(128, activation="relu")(x)
 
-    outputs = keras.layers.Dense(num_classes, activation="softmax", name="output")(x)
+    outputs = keras.layers.Dense(
+        num_classes, activation="softmax", name="output")(x)
 
     return keras.models.Model(inputs=inputs, outputs=outputs)
 
@@ -249,7 +225,8 @@ model.summary()
 
 
 # Compile the model using Adam's default learning rate
-model.compile(optimizer="Adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+model.compile(optimizer="Adam",
+              loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
 
 # In[ ]:
@@ -259,8 +236,10 @@ model.compile(optimizer="Adam", loss="sparse_categorical_crossentropy", metrics=
 # 'EarlyStopping' to stop training when the model is not enhancing anymore
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
 model_save_filename = "CNN_model.h5"
-earlystopping_cb = keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)
-mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(model_save_filename, monitor="val_accuracy", save_best_only=True)
+earlystopping_cb = keras.callbacks.EarlyStopping(
+    patience=10, restore_best_weights=True)
+mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
+    model_save_filename, monitor="val_accuracy", save_best_only=True)
 
 
 # # TRAINING
@@ -268,7 +247,8 @@ mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(model_save_filename, monitor=
 # In[ ]:
 
 
-history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb],)
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[
+                    earlystopping_cb, mdlcheckpoint_cb],)
 
 
 # In[ ]:
@@ -302,10 +282,12 @@ test_audio_paths = []
 test_labels = []
 for label, category in enumerate(test_class_labels):
     print("Processing category {}".format(category,))
-    speaker_sample_paths = [os.path.join(DATASET_ROOT, test_audio_files[i]) for i in range(len(test_audio_files)) if test_classes[i] == category]
+    speaker_sample_paths = [os.path.join(DATASET_ROOT, test_audio_files[i]) for i in range(
+        len(test_audio_files)) if test_classes[i] == category]
     test_audio_paths += speaker_sample_paths
     test_labels += [label] * len(speaker_sample_paths)
-print("Found {} files belonging to {} classes.".format(len(test_audio_paths), len(test_class_labels)))
+print("Found {} files belonging to {} classes.".format(
+    len(test_audio_paths), len(test_class_labels)))
 
 
 # In[ ]:
@@ -327,7 +309,8 @@ test_ds = paths_and_labels_to_dataset(test_audio_paths, test_labels)
 # In[ ]:
 
 
-test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8,
+                          seed=SHUFFLE_SEED).batch(BATCH_SIZE)
 
 
 # In[ ]:
@@ -339,7 +322,8 @@ test_ds = test_ds.prefetch(tf.data.experimental.AUTOTUNE)
 # In[ ]:
 
 
-test_ds = test_ds.map(lambda x, y: (audio_to_fft(x), y), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+test_ds = test_ds.map(lambda x, y: (audio_to_fft(x), y),
+                      num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
 
 # # REVISAR!
@@ -355,7 +339,7 @@ y_pred_lista = []
 # In[ ]:
 
 
-for j in range(len()):    
+for j in range(len()):
     for audios, labels in test_ds.take(1):
         # Get the signal FFT
         ffts = audio_to_fft(audios)
@@ -424,17 +408,19 @@ accuracy_score(real_output, predicted_output)
 # In[ ]:
 
 
-f1_score(real_output, predicted_output, average='macro'), f1_score(real_output, predicted_output, average='micro')
+f1_score(real_output, predicted_output, average='macro'), f1_score(
+    real_output, predicted_output, average='micro')
 
 
 # In[ ]:
 
 
-precision_score(real_output, predicted_output, average='macro'), precision_score(real_output, predicted_output, average='micro')
+precision_score(real_output, predicted_output, average='macro'), precision_score(
+    real_output, predicted_output, average='micro')
 
 
 # In[ ]:
 
 
-recall_score(real_output, predicted_output, average='macro'), recall_score(real_output, predicted_output, average='micro')
-
+recall_score(real_output, predicted_output, average='macro'), recall_score(
+    real_output, predicted_output, average='micro')
