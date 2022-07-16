@@ -55,7 +55,7 @@ def audio_to_fft(audio):
 # Read train files and split class from file
 
 train_file_list = pd.read_csv(
-    '/home/ariel/github/Conv1D/CNN/file_lists/train_database_full.csv')
+    '/home/ferreiraa/Mestrado/github/Conv1D/CNN/file_lists/train_database_full.csv')
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 train_audio_df = pd.DataFrame(train_audio_files)
@@ -101,8 +101,6 @@ train_audio_paths = audio_paths[:-num_val_samples]
 train_labels = labels[:-num_val_samples]
 valid_audio_paths = audio_paths[-num_val_samples:]
 valid_labels = labels[-num_val_samples:]
-
-print(train_audio_paths[:3])
 
 # Create 2 datasets, one for training and the other for validation
 

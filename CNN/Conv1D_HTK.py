@@ -39,7 +39,7 @@ def paths_and_labels_to_dataset(mfc_paths, labels, NORM):
 # Read train files and split class from file
 
 train_file_list = pd.read_csv(
-    '/home/ariel/github/Conv1D/CNN/file_lists/train_database_full.csv')
+    '/home/ferreiraa/Mestrado/github/Conv1D/CNN/file_lists/train_database_full.csv')
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 train_audio_df = pd.DataFrame(train_audio_files)
@@ -95,6 +95,7 @@ for i in range(len(valid_audio_paths)):
         re.sub(r'\d.wav', '.mfc.csv', valid_audio_paths[i]))
 
 
+
 def readCSV(file):
     tensor = pd.read_csv(file, sep=' ', header=None, nrows=169)
     print(tensor)
@@ -112,7 +113,6 @@ mfc = path_ds.applymap(lambda x: readCSV(x))
 print(mfc)
 print(type(mfc))
 
-exit(0)
 
 # Create 2 datasets, one for training and the other for validation
 
