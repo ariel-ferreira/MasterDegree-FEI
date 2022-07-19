@@ -1,7 +1,7 @@
 import os
 import glob
 
-files = glob.glob('/home/ferreiraa/dataSet/audio/agender_distribution/wav_traindevel/**/*.wav.npz', recursive=True)
+files = glob.glob('/home/ferreiraa/dataSet/audio/agender_distribution/wav_traindevel/**/*.wav.tmp', recursive=True)
 
 for f in files:
     try:
