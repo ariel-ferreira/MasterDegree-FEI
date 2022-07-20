@@ -19,8 +19,9 @@ def raw2wav(PATH, files):
     return None
 
 
-PATH = '/home/ferreiraa/Documents/Mestrado/agender_distribution/'
-
+PATH = '/home/ferreiraa/dataSet/audio/agender_distribution/'
+train_file_txt = 'trainSampleList_train.txt'
+devel_file_txt = 'trainSampleList_devel.txt'
 
 file_tr = pd.read_table(str(PATH + train_file_txt), delimiter=' ', header=None)
 file_list_tr = file_tr[0]
