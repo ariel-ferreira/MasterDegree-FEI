@@ -4,6 +4,14 @@ import re
 import numpy as np
 import csv
 
+DATASET_ROOT = os.path.join(os.path.expanduser("~"),
+                            'dataSet/audio/agender_distribution/')
+NETWORK_ROOT = os.path.join(os.path.expanduser("~"),
+                            'Mestrado-PC/github/Conv1D/CNN/')
+MIN_VEC = 200
+
+train_file_list_path = 'file_lists/train_database_full.csv'
+devel_file_list_path = 'file_lists/test_database_full.csv'
 
 def Rename(file):
     x = re.sub('.wav', '.mfc.csv', file)
@@ -17,14 +25,13 @@ def ReadCSV(file):
 
 
 def NumberVectors(file_list):
-    DIR = '/home/ferreiraa/dataSet/audio/agender_distribution/'
     min_sample = 0
     c = 0
     list_vec_qtd = []
     list_file_name = []
     for i in range(len(file_list.index)):
         file = file_list.iat[i , 0]
-        df = ReadCSV(DIR + file)
+        df = ReadCSV(DATASET_ROOT + file)
         c += 1
         num_vectors = len(df.index)
         num_samples = num_vectors
@@ -40,15 +47,11 @@ def NumberVectors(file_list):
     return (min_sample, min_file, c, list_vec_qtd, list_file_name)
 
 
-MIN_VEC = 169
-
-train_file_list = pd.read_csv(
-    '/home/ferreiraa/Mestrado-PC/github/Conv1D/CNN/file_lists/train_database_full.csv')
+train_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 
-devel_file_list = pd.read_csv(
-    '/home/ferreiraa/Mestrado-PC/github/Conv1D/CNN/file_lists/test_database_full.csv')
+devel_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, devel_file_list_path))
 devel_audio_files = devel_file_list['file']
 devel_classes = devel_file_list['class']
 
@@ -67,6 +70,15 @@ devel_min_samplen, devel_min_filename, devel_cross_check, devel_vec_qtd, devel_l
 train_SampleList = list(zip(train_list_filename, train_vec_qtd, train_class_df.values.flatten().tolist()))
 devel_SampleList = list(zip(devel_list_filename, devel_vec_qtd, devel_class_df.values.flatten().tolist()))
 
+train_SampleList_df = pd.DataFrame(train_SampleList, columns=['file', 'qtd. vectors', 'class'])
+devel_SampleList_df = pd.DataFrame(devel_SampleList, columns=['file', 'qtd. vectors', 'class'])
+
+counter_train_SampleList = train_SampleList_df.value_counts(subset = ['qtd. vectors'])
+counter_devel_SampleList = devel_SampleList_df.value_counts(subset = ['qtd. vectors'])
+
+counter_train_SampleList.to_csv(NETWORK_ROOT+'file_lists/counter_vector_train.csv')  
+counter_devel_SampleList.to_csv(NETWORK_ROOT+'file_lists/counter_vector_devel.csv')
+
 sel_filename = []
 sel_class = []
 
@@ -79,6 +91,8 @@ for i in range(len(train_SampleList)):
         None
 
 train_norm_zip_list = list(zip(sel_filename, sel_class))
+
+print(len(train_norm_zip_list))
 
 sel_filename = []
 sel_class = []
@@ -93,14 +107,16 @@ for i in range(len(devel_SampleList)):
 
 devel_norm_zip_list = list(zip(sel_filename, sel_class))
 
+print(len(devel_norm_zip_list))
+
 fields = ['file', 'class']
 
-with open('/home/ferreiraa/Mestrado-PC/github/Conv1D/CNN/file_lists/train_database_normalized.csv', 'w') as f:
+with open(NETWORK_ROOT+'file_lists/train_database_normalized.csv', 'w') as f:
     write = csv.writer(f)
     write.writerow(fields)
     write.writerows(train_norm_zip_list)
 
-with open('/home/ferreiraa/Mestrado-PC/github/Conv1D/CNN/file_lists/test_database_normalized.csv', 'w') as f:
+with open(NETWORK_ROOT+'file_lists/test_database_normalized.csv', 'w') as f:
     write = csv.writer(f)
     write.writerow(fields)
     write.writerows(devel_norm_zip_list)

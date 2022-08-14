@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import os
 import shutil
 import numpy as np
@@ -12,46 +6,21 @@ from tensorflow import keras
 from pathlib import Path
 from IPython.display import display, Audio
 
-
-# In[2]:
-
-
 # Get the data from https://www.kaggle.com/kongaevans/speaker-recognition-dataset/download
 # and save it to the 'Downloads' folder in your HOME directory
 DATASET_ROOT = os.path.join(os.path.expanduser("~"), "Downloads/16000_pcm_speeches")
 
-
-# In[3]:
-
-
 # The folders in which we will put the audio samples and the noise samples
 AUDIO_SUBFOLDER = "audio"
 NOISE_SUBFOLDER = "noise"
-
-
-# In[4]:
-
-
 DATASET_AUDIO_PATH = os.path.join(DATASET_ROOT, AUDIO_SUBFOLDER)
 DATASET_NOISE_PATH = os.path.join(DATASET_ROOT, NOISE_SUBFOLDER)
-
-
-# In[5]:
-
 
 # Percentage of samples to use for validation
 VALID_SPLIT = 0.1
 
-
-# In[6]:
-
-
 # Seed to use when shuffling the dataset and the noise
 SHUFFLE_SEED = 43
-
-
-# In[7]:
-
 
 # The sampling rate to use.
 # This is the one used in all of the audio samples.
@@ -60,57 +29,41 @@ SHUFFLE_SEED = 43
 # (since all samples are of 1 second long)
 SAMPLING_RATE = 16000
 
-
-# In[8]:
-
-
 # The factor to multiply the noise with according to:
-#   noisy_sample = sample + noise * prop * scale
-#      where prop = sample_amplitude / noise_amplitude
+# noisy_sample = sample + noise * prop * scale
+# where prop = sample_amplitude / noise_amplitude
 SCALE = 0.5
-
-
-# In[9]:
-
 
 BATCH_SIZE = 128
 EPOCHS = 100
 
-
-# In[10]:
-
-
-# If folder `audio`, does not exist, create it, otherwise do nothing
+# If folder 'audio', does not exist, create it, otherwise do nothing
 if os.path.exists(DATASET_AUDIO_PATH) is False:
     os.makedirs(DATASET_AUDIO_PATH)
 
-# If folder `noise`, does not exist, create it, otherwise do nothing
+# If folder 'noise', does not exist, create it, otherwise do nothing
 if os.path.exists(DATASET_NOISE_PATH) is False:
     os.makedirs(DATASET_NOISE_PATH)
 
 for folder in os.listdir(DATASET_ROOT):
     if os.path.isdir(os.path.join(DATASET_ROOT, folder)):
         if folder in [AUDIO_SUBFOLDER, NOISE_SUBFOLDER]:
-            # If folder is `audio` or `noise`, do nothing
+            # If folder is 'audio' or 'noise', do nothing
             continue
         elif folder in ["other", "_background_noise_"]:
             # If folder is one of the folders that contains noise samples,
-            # move it to the `noise` folder
+            # move it to the 'noise' folder
             shutil.move(
                 os.path.join(DATASET_ROOT, folder),
                 os.path.join(DATASET_NOISE_PATH, folder),
             )
         else:
             # Otherwise, it should be a speaker folder, then move it to
-            # `audio` folder
+            # 'audio' folder
             shutil.move(
                 os.path.join(DATASET_ROOT, folder),
                 os.path.join(DATASET_AUDIO_PATH, folder),
             )
-
-
-# In[11]:
-
 
 # Get the list of all noise files
 noise_paths = []
@@ -129,10 +82,6 @@ print(
     )
 )
 
-
-# In[12]:
-
-
 command = (
     "for dir in `ls -1 " + DATASET_NOISE_PATH + "`; do "
     "for file in `ls -1 " + DATASET_NOISE_PATH + "/$dir/*.wav`; do "
@@ -145,14 +94,7 @@ command = (
     "fi; done; done"
 )
 
-
-# In[13]:
-
-
 os.system(command)
-
-
-# In[14]:
 
 
 # Split noise into chunks of 16000 each
@@ -170,9 +112,6 @@ def load_noise_sample(path):
         return None
 
 
-# In[15]:
-
-
 noises = []
 for path in noise_paths:
     sample = load_noise_sample(path)
@@ -187,9 +126,6 @@ print(
 )
 
 
-# In[16]:
-
-
 def paths_and_labels_to_dataset(audio_paths, labels):
     """Constructs a dataset of audios and labels."""
     path_ds = tf.data.Dataset.from_tensor_slices(audio_paths)
@@ -198,17 +134,11 @@ def paths_and_labels_to_dataset(audio_paths, labels):
     return tf.data.Dataset.zip((audio_ds, label_ds))
 
 
-# In[17]:
-
-
 def path_to_audio(path):
     """Reads and decodes an audio file."""
     audio = tf.io.read_file(path)
     audio, _ = tf.audio.decode_wav(audio, 1, SAMPLING_RATE)
     return audio
-
-
-# In[18]:
 
 
 def add_noise(audio, noises=None, scale=0.5):
@@ -230,9 +160,6 @@ def add_noise(audio, noises=None, scale=0.5):
     return audio
 
 
-# In[19]:
-
-
 def audio_to_fft(audio):
     # Since tf.signal.fft applies FFT on the innermost dimension,
     # we need to squeeze the dimensions and then expand them again
@@ -246,9 +173,6 @@ def audio_to_fft(audio):
     # Return the absolute value of the first half of the FFT
     # which represents the positive frequencies
     return tf.math.abs(fft[:, : (audio.shape[1] // 2), :])
-
-
-# In[20]:
 
 
 # Get the list of audio file paths along with their corresponding labels
@@ -272,10 +196,6 @@ for label, name in enumerate(class_names):
 print(
     "Found {} files belonging to {} classes.".format(len(audio_paths), len(class_names))
 )
-
-
-# In[21]:
-
 
 # Shuffle
 rng = np.random.RandomState(SHUFFLE_SEED)
