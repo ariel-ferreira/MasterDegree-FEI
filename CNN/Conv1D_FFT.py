@@ -1,30 +1,26 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-import itertools
+import datetime
+import time
 import numpy as np
 import os
 import pandas as pd
-# import re
+import re
 import tensorflow as tf
 from tensorflow import keras
-# from pathlib import Path
-# from IPython.display import display, Audio
-from keras.models import load_model
-from sklearn.metrics import accuracy_score, f1_score, recall_score
-from sklearn.metrics import precision_score
 
-DATASET_ROOT = os.path.join(
-    os.path.expanduser("~"), 'dataSet/audio/agender_distribution/')
+DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
+NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
+
 VALID_SPLIT = 0.1
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
 
+train_file_list_path = 'file_lists/train_database_normalized.csv'
+devel_file_list_path = 'file_lists/test_database_normalized.csv'
 
 def paths_and_labels_to_dataset(audio_paths, labels):
-    """Constructs a dataset of audios and labels."""
+    # Constructs a dataset of audios and labels
     path_ds = tf.data.Dataset.from_tensor_slices(audio_paths)
     audio_ds = path_ds.map(lambda x: path_to_audio(x))
     label_ds = tf.data.Dataset.from_tensor_slices(labels)
@@ -32,37 +28,30 @@ def paths_and_labels_to_dataset(audio_paths, labels):
 
 
 def path_to_audio(path):
-    """Reads and decodes an audio file."""
+    # Reads and decodes an audio file
     audio = tf.io.read_file(path)
     audio, _ = tf.audio.decode_wav(audio, 1, SAMPLING_RATE)
     return audio
 
 
 def audio_to_fft(audio):
-    # Since tf.signal.fft applies FFT on the innermost dimension,
-    # we need to squeeze the dimensions and then expand them again
-    # after FFT
+    # Since tf.signal.fft applies FFT on the innermost dimension, we need to squeeze the dimensions and then expand them again after FFT
     audio = tf.squeeze(audio, axis=-1)
-    fft = tf.signal.fft(
-        tf.cast(tf.complex(real=audio, imag=tf.zeros_like(audio)), tf.complex64
-                ))
+    fft = tf.signal.fft(tf.cast(tf.complex(real=audio, imag=tf.zeros_like(audio)), tf.complex64))
     fft = tf.expand_dims(fft, axis=-1)
-    # Return the absolute value of the first half of the FFT
-    # which represents the positive frequencies
+    # Return the absolute value of the first half of the FFT which represents the positive frequencies
     return tf.math.abs(fft[:, : (audio.shape[1] // 2), :])
 
 
 # Read train files and split class from file
 
-train_file_list = pd.read_csv(
-    '/home/ferreiraa/Mestrado/github/Conv1D/CNN/file_lists/train_database_full.csv')
+train_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 train_audio_df = pd.DataFrame(train_audio_files)
 train_class_df = pd.DataFrame(train_classes)
 
-# In the next section, get the list of audio file paths along with their
-# corresponding labels
+# In the next section, get the list of audio file paths along with their corresponding labels
 
 train_class_labels = list(train_classes.unique())
 
@@ -77,10 +66,12 @@ for label, category in enumerate(train_class_labels):
                             for i in range(len(train_audio_files))
                             if train_classes[i] == category]
     audio_paths += speaker_sample_paths
-    labels += [category - 1] * len(speaker_sample_paths)
+    labels += [category] * len(speaker_sample_paths)
 
-print("Found {} files belonging to {} classes.".format(
-    len(audio_paths), len(train_class_labels)))
+print("Found {} files belonging to {} classes.".format(len(audio_paths), len(train_class_labels)))
+
+for i in range(len(audio_paths)):
+    audio_paths[i] = re.sub('.mfc.csv', '.wav', audio_paths[i])
 
 # Shuffle
 
@@ -93,8 +84,10 @@ rng.shuffle(labels)
 
 num_val_samples = int(VALID_SPLIT * len(audio_paths))
 
-print("Using {} files for training.".format(
-    len(audio_paths) - num_val_samples))
+qtd_files_training = len(audio_paths) - num_val_samples
+qtd_files_validation = num_val_samples
+
+print("Using {} files for training.".format(len(audio_paths) - num_val_samples))
 print("Using {} files for validation.".format(num_val_samples))
 
 train_audio_paths = audio_paths[:-num_val_samples]
@@ -104,19 +97,36 @@ valid_labels = labels[-num_val_samples:]
 
 # Create 2 datasets, one for training and the other for validation
 
+print("Início da criação dos datasets de treino e validação")
+
+start_dataset = time.time()
+
 train_ds = paths_and_labels_to_dataset(train_audio_paths, train_labels)
 valid_ds = paths_and_labels_to_dataset(valid_audio_paths, valid_labels)
 
-train_ds = train_ds.shuffle(
-    buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+end_dataset = (time.time() - start_dataset) / 60
+
+print("Termino da criação dos datasets de treino e validação")
+print("Tempo transcorrido: {} min.".format(end_dataset))
+
+train_ds = train_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
 valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 
 # Transform audio wave to the frequency domain
+
+print("Início da aplicação de FFT nos sinais de áudio")
+
+start_fft = time.time()
 
 train_ds = train_ds.map(lambda x, y: (audio_to_fft(x), y),
                         num_parallel_calls=tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.map(lambda x, y: (audio_to_fft(x), y),
                         num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+end_fft = (time.time() - start_fft) / 60
+
+print("Termino da aplicação de FFT")
+print("Tempo transcorrido: {} min.".format(end_fft))
 
 train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
@@ -137,6 +147,7 @@ def residual_block(x, filters, conv_num=3, activation="relu"):
 
 
 def build_model(input_shape, num_classes):
+    # num_classes = num_classes + 1
     inputs = keras.layers.Input(shape=input_shape, name="input")
 
     x = residual_block(inputs, 16, 2)
@@ -158,7 +169,7 @@ def build_model(input_shape, num_classes):
 
 model = build_model((SAMPLING_RATE // 2, 1), len(train_class_labels))
 
-model.summary()
+# model.summary()
 
 # Compile the model using Adam's default learning rate
 
@@ -169,20 +180,77 @@ model.compile(optimizer="Adam",
 # 'EarlyStopping' to stop training when the model is not enhancing anymore
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
 
-model_save_filename = '/home/ariel/github/Conv1D/CNN/CNN_1D_model.h5'
+timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+
+model_save_filename = os.path.join(NETWORK_ROOT, 'simulations/model_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.h5')
+
 earlystopping_cb = keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True)
 mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
     model_save_filename, monitor="val_accuracy", save_best_only=True)
 
-# # TRAINING
+# TRAINING
 
-history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds,
-                    callbacks=[earlystopping_cb, mdlcheckpoint_cb])
+print("Início treinamento do modelo")
+
+start_train = time.time()
+
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb])
+
+end_train = (time.time() - start_train) / 60
+
+print("Termino treinamento do modelo")
+print("Tempo transcorrido: {} min.".format(end_train))
+
+print("Iniciando sessão de métricas")
+
+start_metrics = time.time()
+
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
+
+loss = history.history['loss']
+val_loss = history.history['val_loss']
+
+'''
+epochs_range = range(EPOCHS)
+plt.figure(figsize=(8, 8))
+plt.subplot(1, 2, 1)
+plt.plot(epochs_range, acc, label='Training Accuracy')
+plt.plot(epochs_range, val_acc, label='Validation Accuracy')
+plt.legend(loc='lower right')
+plt.title('Training and Validation Accuracy')
+plt.subplot(1, 2, 2)
+plt.plot(epochs_range, loss, label='Training Loss')
+plt.plot(epochs_range, val_loss, label='Validation Loss')
+plt.legend(loc='upper right')
+plt.title('Training and Validation Loss')
+plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.png'))
+plt.show()
+'''
 
 print(model.evaluate(valid_ds))
 
+metrics_records = os.path.join(NETWORK_ROOT, 'simulations/metrics_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.txt')
 
+file = open(metrics_records,'a+')
+file.write("Treino com "+str(EPOCHS)+" epochs e "+str(BATCH_SIZE)+" de batch: \n")
+file.write("Tempo de Treino: "+str(end_train)+'\n')
+file.write("Qtd. arquivos de treino: "+str(qtd_files_training)+'\n')
+file.write("Qtd. arquivos de validação: "+str(qtd_files_validation)+'\n')
+file.write("Accuracy: "+str(acc)+'\n')
+file.write("Loss: "+str(loss)+'\n')
+file.write("Val_accuracy: "+str(val_acc)+'\n')
+file.write("Val_loss: "+str(val_loss)+'\n')
+
+end_metrics = (time.time() - start_metrics) / 60
+
+print("Fim sessão de métricas")
+print("Tempo transcorrido: {} min.".format(end_metrics))
+
+print(model.evaluate(valid_ds))
+
+'''
 # # DEMONSTRATION
 
 # Loading model trained previously
@@ -192,7 +260,7 @@ print(model.evaluate(valid_ds))
 # Read test files and split class from file
 
 test_file_list = pd.read_csv(
-    '/home/ariel/github/Conv1D/CNN/file_lists/test_database_full.csv')
+    '/home/ariel/github/Conv1D/CNN/file_lists/test_database_normalized.csv')
 test_audio_files = test_file_list['file']
 test_classes = test_file_list['class']
 test_audio_df = pd.DataFrame(test_audio_files)
@@ -276,9 +344,8 @@ print(precision_score(real_output, predicted_output, average='micro'))
 print(recall_score(real_output, predicted_output, average='macro'))
 print(recall_score(real_output, predicted_output, average='micro'))
 
-exit(0)
 
-'''y_pred_list = []
+y_pred_list = []
 for i in range(1, len(test_ds)):
     for audios, labels in test_ds.take(i):
         # Get the signal FFT
@@ -302,4 +369,6 @@ flatten_labels_list = list(itertools.chain(*labels_list))'''
 for i in range(len(y_pred_list)):
     for j in range(len(y_pred)):
         y_pred_label = np.argmax(y_pred_list[i][j], axis=-1)
-        y_pred_transf.append(y_pred_label)'''
+        y_pred_transf.append(y_pred_label)
+        
+'''
