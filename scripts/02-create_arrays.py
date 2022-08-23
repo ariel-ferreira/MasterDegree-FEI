@@ -7,14 +7,14 @@ DATASET_ROOT = os.path.join(os.path.expanduser("~"),
                             'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),
                             'Mestrado-PC/github/Conv1D/CNN/')
-QTD_VEC = 200
+QTD_VEC = 100
 ARRAY_SIZE = QTD_VEC * 39
 
 train_file_list_path = 'file_lists/train_database_normalized.csv'
 devel_file_list_path = 'file_lists/test_database_normalized.csv'
 
-train_read_csv = pd.read_csv(os.path.join(DATASET_ROOT, train_file_list_path))
-devel_read_csv = pd.read_csv(os.path.join(DATASET_ROOT, devel_file_list_path))
+train_read_csv = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
+devel_read_csv = pd.read_csv(os.path.join(NETWORK_ROOT, devel_file_list_path))
 
 train_csv_files = train_read_csv['file']
 devel_csv_files = devel_read_csv['file']

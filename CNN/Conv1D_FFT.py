@@ -6,6 +6,7 @@ import pandas as pd
 import re
 import tensorflow as tf
 from tensorflow import keras
+import matplotlib.pyplot as plt
 
 DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
@@ -131,6 +132,8 @@ print("Tempo transcorrido: {} min.".format(end_fft))
 train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
 
+print(list(train_ds.as_numpy_iterator()))
+
 # MODEL DEFINITION
 
 
@@ -147,7 +150,7 @@ def residual_block(x, filters, conv_num=3, activation="relu"):
 
 
 def build_model(input_shape, num_classes):
-    # num_classes = num_classes + 1
+    num_classes = num_classes + 1
     inputs = keras.layers.Input(shape=input_shape, name="input")
 
     x = residual_block(inputs, 16, 2)
@@ -212,7 +215,7 @@ val_acc = history.history['val_accuracy']
 loss = history.history['loss']
 val_loss = history.history['val_loss']
 
-'''
+# '''
 epochs_range = range(EPOCHS)
 plt.figure(figsize=(8, 8))
 plt.subplot(1, 2, 1)
@@ -225,9 +228,9 @@ plt.plot(epochs_range, loss, label='Training Loss')
 plt.plot(epochs_range, val_loss, label='Validation Loss')
 plt.legend(loc='upper right')
 plt.title('Training and Validation Loss')
-plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.png'))
+plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.png'))
 plt.show()
-'''
+# '''
 
 print(model.evaluate(valid_ds))
 

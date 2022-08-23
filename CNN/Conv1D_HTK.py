@@ -14,7 +14,7 @@ VALID_SPLIT = 0.1
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
-QTD_VEC = 200
+QTD_VEC = 100
 
 train_file_list_path = 'file_lists/train_database_normalized.csv'
 devel_file_list_path = 'file_lists/test_database_normalized.csv'
@@ -113,6 +113,8 @@ valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
 
+print(list(train_ds.as_numpy_iterator()))
+
 # MODEL DEFINITION
 
 
@@ -129,7 +131,7 @@ def residual_block(x, filters, conv_num=3, activation="relu"):
 
 
 def build_model(input_shape, num_classes):
-    # num_classes = num_classes + 1
+    num_classes = num_classes + 1
     inputs = keras.layers.Input(shape=input_shape, name="input")
 
     x = residual_block(inputs, 16, 2)
@@ -167,7 +169,7 @@ timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
 model_save_filename = os.path.join(NETWORK_ROOT, 'simulations/model_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+'.h5')
 
-earlystopping_cb = keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)
+#earlystopping_cb = keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)
 mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(model_save_filename, monitor="val_accuracy", save_best_only=True)
 
 # TRAINING
@@ -176,9 +178,9 @@ print("Início treinamento do modelo")
 
 start_train = time.time()
 
-history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb])
+# history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb])
 
-#history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[mdlcheckpoint_cb])
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[mdlcheckpoint_cb])
 
 end_train = (time.time() - start_train) / 60
 
@@ -195,7 +197,7 @@ val_acc = history.history['val_accuracy']
 loss = history.history['loss']
 val_loss = history.history['val_loss']
 
-'''
+# '''
 epochs_range = range(EPOCHS)
 plt.figure(figsize=(8, 8))
 plt.subplot(1, 2, 1)
@@ -210,7 +212,7 @@ plt.legend(loc='upper right')
 plt.title('Training and Validation Loss')
 plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+'.png'))
 plt.show()
-'''
+# '''
 
 print(model.evaluate(valid_ds))
 

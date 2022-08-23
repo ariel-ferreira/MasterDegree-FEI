@@ -8,7 +8,7 @@ DATASET_ROOT = os.path.join(os.path.expanduser("~"),
                             'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),
                             'Mestrado-PC/github/Conv1D/CNN/')
-MIN_VEC = 200
+MIN_VEC = 100
 
 train_file_list_path = 'file_lists/train_database_full.csv'
 devel_file_list_path = 'file_lists/test_database_full.csv'
