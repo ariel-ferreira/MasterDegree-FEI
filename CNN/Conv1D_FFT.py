@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
 
-VALID_SPLIT = 0.1
+VALID_SPLIT = 0.20
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
 
-train_file_list_path = 'file_lists/train_database_normalized.csv'
-devel_file_list_path = 'file_lists/test_database_normalized.csv'
+train_file_list_path = 'file_lists/normalizados/train_database_norm_sorted.csv'
+test_file_list_path = 'file_lists/normalizados/test_database_norm_sorted.csv'
 
 def paths_and_labels_to_dataset(audio_paths, labels):
     # Constructs a dataset of audios and labels
@@ -49,30 +49,19 @@ def audio_to_fft(audio):
 train_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
-train_audio_df = pd.DataFrame(train_audio_files)
-train_class_df = pd.DataFrame(train_classes)
 
 # In the next section, get the list of audio file paths along with their corresponding labels
 
-train_class_labels = list(train_classes.unique())
+class_labels = list(train_classes.unique())
+print("Age categories identified: {}".format(train_classes,))
 
-print("Age categories identified: {}".format(train_class_labels,))
-
-audio_paths = []
-labels = []
-
-for label, category in enumerate(train_class_labels):
-    print("Processing category {}".format(category,))
-    speaker_sample_paths = [os.path.join(DATASET_ROOT, train_audio_files[i])
-                            for i in range(len(train_audio_files))
-                            if train_classes[i] == category]
-    audio_paths += speaker_sample_paths
-    labels += [category] * len(speaker_sample_paths)
-
-print("Found {} files belonging to {} classes.".format(len(audio_paths), len(train_class_labels)))
+audio_paths = list(train_audio_files)
+labels = list(train_classes)
 
 for i in range(len(audio_paths)):
-    audio_paths[i] = re.sub('.mfc.csv', '.wav', audio_paths[i])
+    audio_paths[i] = os.path.join(DATASET_ROOT, audio_paths[i])
+
+print("Found {} files belonging to {} classes.".format(len(audio_paths), len(class_labels)))
 
 # Shuffle
 
@@ -132,8 +121,6 @@ print("Tempo transcorrido: {} min.".format(end_fft))
 train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
 
-print(list(train_ds.as_numpy_iterator()))
-
 # MODEL DEFINITION
 
 
@@ -170,7 +157,7 @@ def build_model(input_shape, num_classes):
     return keras.models.Model(inputs=inputs, outputs=outputs)
 
 
-model = build_model((SAMPLING_RATE // 2, 1), len(train_class_labels))
+model = build_model((SAMPLING_RATE // 2, 1), len(class_labels))
 
 # model.summary()
 
@@ -182,15 +169,27 @@ model.compile(optimizer="Adam",
 # Add callbacks:
 # 'EarlyStopping' to stop training when the model is not enhancing anymore
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
+# 'Tensorboard' to print logs/metrics from training phase
 
 timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-model_save_filename = os.path.join(NETWORK_ROOT, 'simulations/model_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.h5')
+model_save_filename = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"model.h5")
 
 earlystopping_cb = keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True)
 mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
     model_save_filename, monitor="val_accuracy", save_best_only=True)
+tensorboard_cb = keras.callbacks.TensorBoard(
+    log_dir=NETWORK_ROOT+"simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"logs",
+    histogram_freq=0,
+    write_graph=True,
+    write_images=False,
+    write_steps_per_second=False,
+    update_freq="epoch",
+    profile_batch=0,
+    embeddings_freq=0,
+    embeddings_metadata=None
+    )
 
 # TRAINING
 
@@ -198,7 +197,7 @@ print("Início treinamento do modelo")
 
 start_train = time.time()
 
-history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb])
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[mdlcheckpoint_cb, tensorboard_cb])
 
 end_train = (time.time() - start_train) / 60
 
@@ -209,38 +208,55 @@ print("Iniciando sessão de métricas")
 
 start_metrics = time.time()
 
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
+acc_array = np.asarray(list(history.history['accuracy']), dtype=np.float64)
+acc_mean = np.mean(acc_array)
+acc_max = np.amax(acc_array)
+acc_min = np.amin(acc_array)
+acc = []
+acc.append(acc_mean)
+acc.append(acc_max)
+acc.append(acc_min)
 
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+val_acc_array = np.asarray(list(history.history['val_accuracy']), dtype=np.float64)
+val_acc_mean = np.mean(val_acc_array)
+val_acc_max = np.amax(val_acc_array)
+val_acc_min = np.amin(val_acc_array)
+val_acc = []
+val_acc.append(val_acc_mean)
+val_acc.append(val_acc_max)
+val_acc.append(val_acc_min)
 
-# '''
-epochs_range = range(EPOCHS)
-plt.figure(figsize=(8, 8))
-plt.subplot(1, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training and Validation Accuracy')
-plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
-plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.png'))
-plt.show()
-# '''
+loss_array = np.asarray(list(history.history['loss']), dtype=np.float64)
+loss_mean = np.mean(loss_array)
+loss_max = np.amax(loss_array)
+loss_min = np.amin(loss_array)
+loss = []
+loss.append(loss_mean)
+loss.append(loss_max)
+loss.append(loss_min)
 
-print(model.evaluate(valid_ds))
+val_loss_array = np.asarray(list(history.history['val_loss']), dtype=np.float64)
+val_loss_mean = np.mean(val_loss_array)
+val_loss_max = np.amax(val_loss_array)
+val_loss_min = np.amin(val_loss_array)
+val_loss = []
+val_loss.append(val_loss_mean)
+val_loss.append(val_loss_max)
+val_loss.append(val_loss_min)
 
-metrics_records = os.path.join(NETWORK_ROOT, 'simulations/metrics_FFT_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+timestamp+'.txt')
+model_evaluate = model.evaluate(valid_ds)
 
-file = open(metrics_records,'a+')
-file.write("Treino com "+str(EPOCHS)+" epochs e "+str(BATCH_SIZE)+" de batch: \n")
+print(model_evaluate)
+
+metric_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"metrics.txt")
+
+file = open(metric_records,'a+')
+file.write("Epochs: "+str(EPOCHS)+"\n")
+file.write("Batch: "+str(BATCH_SIZE)+"\n")
 file.write("Tempo de Treino: "+str(end_train)+'\n')
 file.write("Qtd. arquivos de treino: "+str(qtd_files_training)+'\n')
 file.write("Qtd. arquivos de validação: "+str(qtd_files_validation)+'\n')
+file.write("Validação do modelo: "+str(model_evaluate)+'\n')
 file.write("Accuracy: "+str(acc)+'\n')
 file.write("Loss: "+str(loss)+'\n')
 file.write("Val_accuracy: "+str(val_acc)+'\n')
@@ -253,125 +269,72 @@ print("Tempo transcorrido: {} min.".format(end_metrics))
 
 print(model.evaluate(valid_ds))
 
-'''
-# # DEMONSTRATION
+exit(0)
 
-# Loading model trained previously
+# Test demo
 
-# model = load_model('CNN_model_7_class.h5')
+model = keras.models.load_model(os.path.join(NETWORK_ROOT, "simulations/model_FFT_E100_B128_20220911-015734/model.h5"))
 
-# Read test files and split class from file
-
-test_file_list = pd.read_csv(
-    '/home/ariel/github/Conv1D/CNN/file_lists/test_database_normalized.csv')
+test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path))
 test_audio_files = test_file_list['file']
 test_classes = test_file_list['class']
-test_audio_df = pd.DataFrame(test_audio_files)
-test_class_df = pd.DataFrame(test_classes)
-
-# Get the labels of test data
 
 test_class_labels = list(test_classes.unique())
+print("Age categories identified: {}".format(test_classes,))
 
-print("Age categories identified: {}".format(test_class_labels,))
-
-# Get the list of test audio file paths along with their corresponding labels
-
-test_audio_paths = []
-test_labels = []
-
-for label, category in enumerate(test_class_labels):
-    print("Processing category {}".format(category,))
-    speaker_sample_paths = [os.path.join(DATASET_ROOT, test_audio_files[i])
-                            for i in range(len(test_audio_files))
-                            if test_classes[i] == category]
-    test_audio_paths += speaker_sample_paths
-    test_labels += [category - 1] * len(speaker_sample_paths)
-
-print("Found {} files belonging to {} classes.".format(
-    len(test_audio_paths), len(test_class_labels)))
-
+test_audio_paths = list(test_audio_files)
+test_labels = list(test_classes)
 
 rng = np.random.RandomState(SHUFFLE_SEED)
 rng.shuffle(test_audio_paths)
 rng = np.random.RandomState(SHUFFLE_SEED)
 rng.shuffle(test_labels)
 
-# Creating the test dataset
+test_audio_paths = test_audio_paths[:1000]
+test_labels = test_labels[:1000]
+
+for i in range(len(test_audio_paths)):
+    test_audio_paths[i] = os.path.join(DATASET_ROOT, test_audio_paths[i])
+
+qtd_files_testing = len(test_audio_paths)
+
+print("Found {} files belonging to {} classes.".format(qtd_files_testing, len(test_class_labels)))
 
 test_ds = paths_and_labels_to_dataset(test_audio_paths, test_labels)
 
-test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8,
-                          seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
 
-test_ds = test_ds.map(lambda x, y: (audio_to_fft(x), y),
-                      num_parallel_calls=tf.data.experimental.AUTOTUNE)
+SAMPLES_TO_DISPLAY = 50
 
-test_ds = test_ds.prefetch(tf.data.experimental.AUTOTUNE)
+y_true = []
+y_predicted = []
 
-# REVISAR!
+for audios, labels in test_ds.take(1):
+    # Get the signal FFT
+    ffts = audio_to_fft(audios)
+    # Predict
+    y_pred = model.predict(ffts)
+    # Take random samples
+    rnd = np.random.randint(0, BATCH_SIZE, SAMPLES_TO_DISPLAY)
+    audios = audios.numpy()[rnd, :, :]
+    labels = labels.numpy()[rnd]
+    y_pred = np.argmax(y_pred, axis=-1)[rnd]
 
-audios_list = []
-labels_list = []
-y_pred_list = []
+    for index in range(SAMPLES_TO_DISPLAY):
+        # For every sample, print the true and predicted label
+        # as well as run the voice with the noise
+        print(
+            "True class: {} - Predicted class: {}".format(
+                test_class_labels[labels[index]],
+                test_class_labels[y_pred[index]],
+            )
+        )
+        y_true.append(test_class_labels[labels[index]])
+        y_predicted.append(test_class_labels[y_pred[index]])
 
-for j in range(len(test_ds)):
-    for audios, labels in test_ds.take(j):
-        # Get the signal FFT
-        ffts = audio_to_fft(audios)
-        # Predict
-        y_pred = model.predict(ffts)
-        audios = audios.numpy()
-        labels = labels.numpy()
-        y_pred = np.argmax(y_pred, axis=-1)
-        audios_list.append(audios)
-        labels_list.append(labels)
-        y_pred_list.append(y_pred)
+correct_predict = 0.0
+for i in range(len(y_true)):
+     if int(y_predicted[i]) == int(y_true[i]):
+         correct_predict += 1.
 
-flatten_labels_list = list(itertools.chain(*labels_list))
-flatten_y_pred_list = list(itertools.chain(*y_pred_list))
-
-real_output = flatten_labels_list
-predicted_output = flatten_y_pred_list
-
-# Metrics
-
-print(accuracy_score(real_output, predicted_output))
-
-print(f1_score(real_output, predicted_output, average='macro'))
-print(f1_score(real_output, predicted_output, average='micro'))
-
-print(precision_score(real_output, predicted_output, average='macro'))
-print(precision_score(real_output, predicted_output, average='micro'))
-
-print(recall_score(real_output, predicted_output, average='macro'))
-print(recall_score(real_output, predicted_output, average='micro'))
-
-
-y_pred_list = []
-for i in range(1, len(test_ds)):
-    for audios, labels in test_ds.take(i):
-        # Get the signal FFT
-        ffts = audio_to_fft(audios)
-        # Predict
-        y_pred = model.predict(ffts)
-    y_pred_list.append(y_pred)'''
-
-'''audios_list = []
-labels_list = []
-
-for w in range(1, len(test_ds)):
-    for audios, labels in test_ds.take(w):
-        audios = audios.numpy()
-        labels = labels.numpy()
-    audios_list.append(audios)
-    labels_list.append(labels)
-flatten_labels_list = list(itertools.chain(*labels_list))'''
-
-'''y_pred_transf = []
-for i in range(len(y_pred_list)):
-    for j in range(len(y_pred)):
-        y_pred_label = np.argmax(y_pred_list[i][j], axis=-1)
-        y_pred_transf.append(y_pred_label)
-        
-'''
+print("A porcentagem de acerto é de : "+str((correct_predict*100)/len(y_true))+"%")

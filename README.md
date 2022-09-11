@@ -3,13 +3,67 @@
 # 2020 - 2022
 # Age estimation based on human speech using a 1D convolutional neural network.
 
-Folder scripts:
+Para rodar as simulações: "targets"
 
-check_empty_files.py - script criado para verificar quantos arquivos haviam sido perdidos após a recuperação do bando de dados do HDD da Seagate.Não é mais utilizado, visto que todos os arquivos do banco foram recriados.
+estimação aleatória para 7 classes: (1/7)*100% = 14.3%
 
-file_selection_norm.py - script utilizado para verificar a quantidade de vetores em cada arquivo de coeficientes MFCC (referente a cada arquivo de áudio do banco), e assim selecionar a lista de arquivos que serão utillizos na rede. Esse script apenas cria um .csv com o nome/classe de cada arquivo que possui número de vetores igual ou superior ao número mínimo definido para normalização das matrizes (169). 
+projeto Ivandro (parte 1):
 
-create_arrays.py - lê os arquivos selecionados através do script "file_selection_norm.py", importando de cada csv apenas a quantidade de vetores definida como a quantidade padrão para normalização das matrizes (169, criando assim matrizes 39x169) e, em seguida, realiza a transformação para NumPy arrays e as salva em arquivos binários.
+precisão global para 7 classes: 56.8% (5138 arquivos utilizados no teste - retirados da lista de teste)
+precisão global para 4* classes: 58.6% (5138 arquivos utilizados no teste - retirados da lista de teste)
+
+* crianças, jovens, adultos, idosos. 
+
+projeto Ivandro (parte 2):
+
+precisão global para 4* classes: 49.2% (20492 arquivos utilizados no teste)
+precisão global para 3** classes: 87.8% (20492 arquivos utilizados no teste)
+
+** crianças, mulheres, homems.
+
+---------------------------
+
+Arquivos para treinamento, validação e teste:
+
+test_database_full.csv - 
+test_database_norm_full.csv - 
+test_database_shuffled.csv - 
+test_database_sorted.csv - 
+test_sub_dataset_shuffled.csv - 
+train_database_full.csv - 
+train_database_norm_full.csv - 
+train_database_shuffled.csv - 
+train_database_sorted.csv - 
+valid_sub_dataset_shuffled.csv - 
+
+---------------------------
+
+Agender Dataset:
+
+dataset original:
+
+20549 arquivos (utterances) para teste 
+32527 arquivos (utterances) para treino
+
+métricas:
+
+total time (min): 1405.891666666668
+total time (hrs): 23.431527777777802
+total size (MB): 1288.5318511956002
+total size (GB): 1.2578621720279999
+
+---
+dataset normalizado: 
+
+20549 arquivos (utterances) para teste 
+32527 arquivos (utterances) para treino
+
+métricas:
+
+total time (min): 654.0857333332484
+total time (hrs): 10.901428888887475
+total size (MB): 600.2144253204001
+total size (GB): 0.585928101052
 
 
 ------ Organizar:
