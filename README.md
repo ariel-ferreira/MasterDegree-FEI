@@ -121,3 +121,5 @@ Primeiramente montar a matriz de confusão com as 7 classes.
 
 - Fazer os mesmos testes, porém remover a classe das crianças.
 
+https://pyquestions.com/feeding-npy-numpy-files-into-tensorflow-data-pipeline
+

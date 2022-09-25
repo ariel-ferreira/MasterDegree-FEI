@@ -7,67 +7,52 @@ import time
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow import keras
+import random
 
 DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
-VALID_SPLIT = 0.1
+
+VALID_SPLIT = 0.20
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
-QTD_VEC = 100
+QTD_VEC = 30
+npy_header_offset = 128
+array_dtype = tf.float64
+num_features = QTD_VEC * 39
 
-train_file_list_path = 'file_lists/train_database_normalized.csv'
-devel_file_list_path = 'file_lists/test_database_normalized.csv'
+timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-def map_func(npy_path):
-    npy_content = np.load(npy_path)
-    return npy_content
+train_file_list_path = 'file_lists/HTK-FFT/train_database_sorted2.csv'
+test_file_list_path = 'file_lists/HTK-FFT/test_database_sorted2.csv'
 
 
 def paths_and_labels_to_dataset(paths, labels):
-    path_ds = tf.data.Dataset.from_tensor_slices(paths)
-    array_ds = path_ds.map(lambda x: tf.numpy_function(map_func, [x], tf.float64),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    path_ds = tf.data.FixedLengthRecordDataset([paths], num_features * array_dtype.size, header_bytes=npy_header_offset)
+    audio_ds = path_ds.map(lambda x: tf.reshape(tf.io.decode_raw(x, array_dtype), (num_features, 1)))
     label_ds = tf.data.Dataset.from_tensor_slices(labels)
-    return tf.data.Dataset.zip((array_ds, label_ds))
+    return tf.data.Dataset.zip((audio_ds, label_ds))
 
 
 # Read train files and split class from file
 
-print("Inicio leitura lista de arquivos")
-
-start_read = time.time()
-
 train_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
 train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
-train_audio_df = pd.DataFrame(train_audio_files)
-train_class_df = pd.DataFrame(train_classes)
 
-train_class_labels = list(train_classes.unique())
-print("Age categories identified: {}".format(train_class_labels,))
+class_labels = list(train_classes.unique())
+print("Age categories identified: {}".format(train_classes,))
 
-audio_paths = []
-labels = []
+audio_paths = list(train_audio_files)
+labels = list(train_classes)
 
-for label, category in enumerate(train_class_labels):
-    print("Processing category {}".format(category,))
-    speaker_sample_paths = [os.path.join(DATASET_ROOT, train_audio_files[i])
-                            for i in range(len(train_audio_files))
-                            if train_classes[i] == category]
-    audio_paths += speaker_sample_paths
-    labels += [category] * len(speaker_sample_paths)
+print("Found {} files belonging to {} classes.".format(len(audio_paths), len(class_labels)))
 
-print(
-    "Found {} files belonging to {} classes.".format(len(audio_paths),
-                                                     len(train_class_labels)))
+for i in range(len(audio_paths)):
+    audio_paths[i] = os.path.join(DATASET_ROOT, audio_paths[i])
 
 for i in range(len(audio_paths)):
     audio_paths[i] = re.sub('.mfc.csv', '.npy', audio_paths[i])
-
-end_read = (time.time() - start_read) / 60
-
-print("Termino leitura lista de arquivos")
-print("Tempo transcorrido: {} min.".format(end_read))
 
 # Shuffle
 
@@ -88,32 +73,17 @@ print("Using {} files for validation.".format(num_val_samples))
 
 train_audio_paths = audio_paths[:-num_val_samples]
 train_labels = labels[:-num_val_samples]
-
 valid_audio_paths = audio_paths[-num_val_samples:]
 valid_labels = labels[-num_val_samples:]
-
-# Create 2 datasets, one for training and the other for validation
-
-print("Início da criação dos datasets de treino e validação")
-
-start_dataset = time.time()
 
 train_ds = paths_and_labels_to_dataset(train_audio_paths, train_labels)
 valid_ds = paths_and_labels_to_dataset(valid_audio_paths, valid_labels)
 
-end_dataset = (time.time() - start_dataset) / 60
-
-print("Termino da criação dos datasets de treino e validação")
-print("Tempo transcorrido: {} min.".format(end_dataset))
-
-train_ds = train_ds.shuffle(
-    buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+train_ds = train_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
 valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 
 train_ds = train_ds.prefetch(tf.data.experimental.AUTOTUNE)
 valid_ds = valid_ds.prefetch(tf.data.experimental.AUTOTUNE)
-
-print(list(train_ds.as_numpy_iterator()))
 
 # MODEL DEFINITION
 
@@ -131,7 +101,7 @@ def residual_block(x, filters, conv_num=3, activation="relu"):
 
 
 def build_model(input_shape, num_classes):
-    num_classes = num_classes + 1
+    # num_classes = num_classes + 1
     inputs = keras.layers.Input(shape=input_shape, name="input")
 
     x = residual_block(inputs, 16, 2)
@@ -152,9 +122,9 @@ def build_model(input_shape, num_classes):
     return keras.models.Model(inputs=inputs, outputs=outputs)
 
 
-model = build_model((QTD_VEC, 39), len(train_class_labels))
+model = build_model((QTD_VEC*39, 1), len(class_labels))
 
-#model.summary()
+# model.summary()
 
 # Compile the model using Adam's default learning rate
 
@@ -164,13 +134,25 @@ model.compile(optimizer="Adam",
 # Add callbacks:
 # 'EarlyStopping' to stop training when the model is not enhancing anymore
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
+# 'Tensorboard' to print logs/metrics from training phase
 
-timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+model_save_filename = os.path.join(NETWORK_ROOT, 'simulations/model_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+"/"+"model.h5")
 
-model_save_filename = os.path.join(NETWORK_ROOT, 'simulations/model_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+'.h5')
-
-#earlystopping_cb = keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)
-mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(model_save_filename, monitor="val_accuracy", save_best_only=True)
+earlystopping_cb = keras.callbacks.EarlyStopping(
+    patience=10, restore_best_weights=True)
+mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
+    model_save_filename, monitor="val_accuracy", save_best_only=True)
+tensorboard_cb = keras.callbacks.TensorBoard(
+    log_dir=NETWORK_ROOT + 'simulations/model_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+"/"+"logs",
+    histogram_freq=0,
+    write_graph=True,
+    write_images=False,
+    write_steps_per_second=False,
+    update_freq="epoch",
+    profile_batch=0,
+    embeddings_freq=0,
+    embeddings_metadata=None
+    )
 
 # TRAINING
 
@@ -178,57 +160,138 @@ print("Início treinamento do modelo")
 
 start_train = time.time()
 
-# history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb])
-
-history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[mdlcheckpoint_cb])
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks=[earlystopping_cb, mdlcheckpoint_cb, tensorboard_cb])
 
 end_train = (time.time() - start_train) / 60
 
 print("Termino treinamento do modelo")
 print("Tempo transcorrido: {} min.".format(end_train))
 
-print("Iniciando sessão de métricas")
+acc_array = np.asarray(list(history.history['accuracy']), dtype=np.float64)
+acc_mean = np.mean(acc_array)
+acc_max = np.amax(acc_array)
+acc_min = np.amin(acc_array)
+acc = []
+acc.append(acc_mean)
+acc.append(acc_max)
+acc.append(acc_min)
 
-start_metrics = time.time()
+val_acc_array = np.asarray(list(history.history['val_accuracy']), dtype=np.float64)
+val_acc_mean = np.mean(val_acc_array)
+val_acc_max = np.amax(val_acc_array)
+val_acc_min = np.amin(val_acc_array)
+val_acc = []
+val_acc.append(val_acc_mean)
+val_acc.append(val_acc_max)
+val_acc.append(val_acc_min)
 
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
+loss_array = np.asarray(list(history.history['loss']), dtype=np.float64)
+loss_mean = np.mean(loss_array)
+loss_max = np.amax(loss_array)
+loss_min = np.amin(loss_array)
+loss = []
+loss.append(loss_mean)
+loss.append(loss_max)
+loss.append(loss_min)
 
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+val_loss_array = np.asarray(list(history.history['val_loss']), dtype=np.float64)
+val_loss_mean = np.mean(val_loss_array)
+val_loss_max = np.amax(val_loss_array)
+val_loss_min = np.amin(val_loss_array)
+val_loss = []
+val_loss.append(val_loss_mean)
+val_loss.append(val_loss_max)
+val_loss.append(val_loss_min)
 
-# '''
-epochs_range = range(EPOCHS)
-plt.figure(figsize=(8, 8))
-plt.subplot(1, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training and Validation Accuracy')
-plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
-plt.savefig(os.path.join(NETWORK_ROOT, 'simulations/figure_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+'.png'))
-plt.show()
-# '''
+model_evaluate = model.evaluate(valid_ds)
 
-print(model.evaluate(valid_ds))
+print(model_evaluate)
 
-metrics_records = os.path.join(NETWORK_ROOT, 'simulations/metrics_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+'.txt')
+metric_records = os.path.join(NETWORK_ROOT, 'simulations/metrics_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+"/"+"metrics.txt")
 
-file = open(metrics_records,'a+')
-file.write("Treino com "+str(EPOCHS)+" epochs e "+str(BATCH_SIZE)+" de batch: \n")
+file = open(metric_records,'a+')
+file.write("Epochs: "+str(EPOCHS)+"\n")
+file.write("Batch: "+str(BATCH_SIZE)+"\n")
 file.write("Tempo de Treino: "+str(end_train)+'\n')
 file.write("Qtd. arquivos de treino: "+str(qtd_files_training)+'\n')
 file.write("Qtd. arquivos de validação: "+str(qtd_files_validation)+'\n')
-file.write("Accuracy: "+str(acc)+'\n')
+file.write("Validação do modelo: "+str(model_evaluate)+'\n')
+file.write("Precisão: "+str(acc)+'\n')
 file.write("Loss: "+str(loss)+'\n')
-file.write("Val_accuracy: "+str(val_acc)+'\n')
-file.write("Val_loss: "+str(val_loss)+'\n')
+file.write("Precisão_val: "+str(val_acc)+'\n')
+file.write("Loss_val: "+str(val_loss)+'\n')
 
-end_metrics = (time.time() - start_metrics) / 60
+# TESTING
 
-print("Fim sessão de métricas")
-print("Tempo transcorrido: {} min.".format(end_metrics))
+'''model_folder = "simulations/model_FFT_E100_B128_20220911-045418/"
+model_name = "model.h5"
+
+model = keras.models.load_model(os.path.join(NETWORK_ROOT, model_folder + model_name))'''
+
+# test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path))
+
+p = 0.1  # 10% of the lines
+# keep the header, then take only p*100% of lines from the source csv file
+test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path), header=0, skiprows=lambda i: i>0 and random.random() > p)
+
+test_audio_files = test_file_list['file']
+test_classes = test_file_list['class']
+
+test_class_labels = list(test_classes.unique())
+print("Age categories identified: {}".format(test_classes,))
+
+test_audio_paths = list(test_audio_files)
+test_labels = list(test_classes)
+
+rng = np.random.RandomState(SHUFFLE_SEED)
+rng.shuffle(test_audio_paths)
+rng = np.random.RandomState(SHUFFLE_SEED)
+rng.shuffle(test_labels)
+
+for i in range(len(test_audio_paths)):
+    test_audio_paths[i] = os.path.join(DATASET_ROOT, test_audio_paths[i])
+
+qtd_files_testing = len(test_audio_paths)
+
+print("Using {} files belonging to {} classes.".format(qtd_files_testing, len(test_class_labels)))
+
+test_ds = paths_and_labels_to_dataset(test_audio_paths, test_labels)
+
+test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED, reshuffle_each_iteration=False).batch(BATCH_SIZE)
+
+y_true = []
+y_predicted = []
+
+for audios, labels in test_ds:
+    y_pred = model.predict(audios)
+    audios = audios.numpy()
+    labels = labels.numpy()
+    y_pred = np.argmax(y_pred, axis=-1)
+    y_true.append(labels)
+    y_predicted.append(y_pred)
+
+real = np.concatenate(y_true)
+predicted = np.concatenate(y_predicted)
+
+r = len(real)
+p = len(predicted)
+
+if r == p:
+    correct_predict = 0.0
+    for i in range(len(real)):
+        if int(predicted[i]) == int(real[i]):
+            correct_predict += 1.
+else:
+    print("Error - length of real and predicted vectors does not match!")
+
+'''test_records = os.path.join(NETWORK_ROOT, model_folder + timestamp + "test_records_from_saved_model.txt")
+
+file = open(test_records,'a+')
+file.write("Teste do modelo - resultado: "+"\n")
+file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")'''
+
+test_records = os.path.join(NETWORK_ROOT, 'simulations/metrics_HTK_'+'E'+str(EPOCHS)+'_'+'B'+str(BATCH_SIZE)+'_'+'V'+str(QTD_VEC)+'_'+timestamp+"/"+"test_records.txt")
+
+file = open(test_records,'a+')
+file.write("Teste do modelo - resultado: "+"\n")
+file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")
