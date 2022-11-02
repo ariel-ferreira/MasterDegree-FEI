@@ -1,4 +1,5 @@
 {
     "editor.wordWrapColumn": 79,
-    "editor.wordWrap": "wordWrapColumn"
+    "editor.wordWrap": "wordWrapColumn",
+    "python.analysis.typeCheckingMode": "off"
 }

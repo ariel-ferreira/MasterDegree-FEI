@@ -1,2 +1,0 @@
-Teste do modelo - resultado: 
-A porcentagem de acerto é de: 33.771289537712896%

@@ -1,0 +1,6 @@
+Teste_ com 100 epocas e 73 de batch: 
+Tempo de Retirada de caracteristicas: 0.5839817652302067
+Tempo de Treino: 248.76966261863708
+Tempo de Teste: 0.00010723094943086016
+Porcentagem de acerto: 37.08181265206812%
+##########

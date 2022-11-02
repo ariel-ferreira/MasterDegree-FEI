@@ -128,6 +128,7 @@ Batch = 73
 Epoch = 100
 VALID_SPLIT = 0.1
 SHUFFLE_SEED = 43
+QTD_TST_FILES = 5000
 
 #Read files, shuffle rows, and split validation dataset from train file list
 
@@ -139,6 +140,7 @@ test_audio_files = test_file_list.sample(frac=1, random_state=SHUFFLE_SEED, axis
 split_index = int((len(train_file_list)) * VALID_SPLIT)
 
 train_audio_files = train_file_list.iloc[split_index:].reset_index(drop=True)
+test_audio_files = test_audio_files.iloc[QTD_TST_FILES:].reset_index(drop=True)
 valid_audio_files = train_file_list.iloc[:split_index].reset_index(drop=True)
 
 train_df = train_audio_files['file']

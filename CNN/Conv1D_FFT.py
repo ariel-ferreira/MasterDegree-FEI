@@ -11,16 +11,16 @@ import random
 DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
 
-VALID_SPLIT = 0.20
+VALID_SPLIT = 0.10
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
-
+qtd_class = 3
 timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-train_file_list_path = 'file_lists/normalizados/train_database_norm_sorted.csv'
-test_file_list_path = 'file_lists/normalizados/test_database_norm_sorted.csv'
+train_file_list_path = 'file_lists/3-classes/train_database_full.csv'
+test_file_list_path = 'file_lists/3-classes/test_database_full.csv'
 
 def paths_and_labels_to_dataset(audio_paths, labels):
     # Constructs a dataset of audios and labels
@@ -153,18 +153,18 @@ model.compile(optimizer="Adam",
 # 'ModelCheckPoint' to always keep the model that has the best val_accuracy
 # 'Tensorboard' to print logs/metrics from training phase
 
-model_save_filename = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"model.h5")
+model_save_filename = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"model.h5")
 
 earlystopping_cb = keras.callbacks.EarlyStopping(
     patience=10, restore_best_weights=True)
 mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
     model_save_filename, monitor="val_accuracy", save_best_only=True)
 tensorboard_cb = keras.callbacks.TensorBoard(
-    log_dir=NETWORK_ROOT+"simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"logs",
-    histogram_freq=0,
+    log_dir=NETWORK_ROOT+"simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"logs",
+    histogram_freq=1,
     write_graph=True,
     write_images=False,
-    write_steps_per_second=False,
+    write_steps_per_second=True,
     update_freq="epoch",
     profile_batch=0,
     embeddings_freq=0,
@@ -181,7 +181,7 @@ history = model.fit(train_ds, epochs=EPOCHS, validation_data=valid_ds, callbacks
 
 end_train = (time.time() - start_train) / 60
 
-print("Termino treinamento do modelo")
+print("Término treinamento do modelo")
 print("Tempo transcorrido: {} min.".format(end_train))
 
 acc_array = np.asarray(list(history.history['accuracy']), dtype=np.float64)
@@ -226,14 +226,14 @@ print(model_evaluate)
 
 # TESTING
 
-model_folder = "simulations/model_FFT_E100_B128_20220911-045418/"
+'''model_folder = "simulations/model_FFT_E100_B128_20220911-045418/"
 model_name = "model.h5"
 
-model = keras.models.load_model(os.path.join(NETWORK_ROOT, model_folder + model_name))
+model = keras.models.load_model(os.path.join(NETWORK_ROOT, model_folder + model_name))'''
 
 # test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path))
 
-p = 0.1  # 10% of the lines
+p = 0.25  # 25% of the lines
 # keep the header, then take only p*100% of lines from the source csv file
 test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path), header=0, skiprows=lambda i: i>0 and random.random() > p)
 
@@ -284,17 +284,19 @@ if r == p:
     correct_predict = 0.0
     for i in range(len(real)):
         if int(predicted[i]) == int(real[i]):
-            correct_predict += 1.
+            correct_predict += 1
 else:
     print("Error - length of real and predicted vectors does not match!")
 
-test_records = os.path.join(NETWORK_ROOT, model_folder + timestamp + "test_records_from_saved_model.txt")
+perc_corr_predict = (correct_predict*100)/r
+
+'''test_records = os.path.join(NETWORK_ROOT, model_folder + timestamp + "test_records_from_saved_model.txt")
 
 file = open(test_records,'a+')
 file.write("Teste do modelo - resultado: "+"\n")
-file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")
+file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")'''
 
-'''metric_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"metrics.txt")
+metric_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"metrics.txt")
 
 file = open(metric_records,'a+')
 file.write("Epochs: "+str(EPOCHS)+"\n")
@@ -309,8 +311,8 @@ file.write("Precisão_val: "+str(val_acc)+'\n')
 file.write("Loss_val: "+str(val_loss)+'\n')
 
 
-test_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+"E"+str(EPOCHS)+"_"+"B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"test_records.txt")
+test_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"test_records.txt")
 
 file = open(test_records,'a+')
 file.write("Teste do modelo - resultado: "+"\n")
-file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")'''
+file.write("A porcentagem de acerto é de: "+str(perc_corr_predict)+"%")
