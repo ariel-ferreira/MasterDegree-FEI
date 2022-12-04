@@ -10,7 +10,11 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            
+            "args" : [
+                "--cfg", "/home/ferreiraa/Mestrado-PC/github/Conv1D/SincNet/keras-sincnet/cfg/Sincnet_Agender.cfg"
+            ]
         }
     ]
 }
