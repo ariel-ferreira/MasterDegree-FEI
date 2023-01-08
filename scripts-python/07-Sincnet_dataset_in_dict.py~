@@ -26,11 +26,8 @@ def Strip(path):
     # print(path)
     return path.replace(" ", "")
 
-#train_df = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
-#test_df = pd.read_csv(os.path.join(NETWORK_ROOT, devel_file_list_path))
-
-train_df = pd.read_csv(train_file_list_path)
-test_df = pd.read_csv(devel_file_list_path)
+train_df = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path))
+test_df = pd.read_csv(os.path.join(NETWORK_ROOT, devel_file_list_path))
 
 # train_dict = pd.read_csv(os.path.join(NETWORK_ROOT, train_file_list_path),header=None, index_col=0, squeeze=True).to_dict()
 # devel_dict = pd.read_csv(os.path.join(NETWORK_ROOT, devel_file_list_path), header=None, index_col=0, squeeze=True, skipfooter=14999).to_dict()
