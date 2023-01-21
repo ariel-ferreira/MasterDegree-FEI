@@ -1,0 +1,17 @@
+- 47 horas de gravações
+- free text: short commands, single words and numbers
+- 954 participants
+- equal distribution of males and females
+- 7 grupos: crianças, jovens (homens e mulheres), adultos (homens e mulheres) e idosos (homens e mulheres)
+
+Metodologia para obtenção do banco de dados:
+- Each time they were prompted by an automated Interactive Voice Response (IVR) system to repeat given utterances or speak free content (section 4). The speakers got individual prompt sheets containing the utterances and additional instructions. Between each session a break of one day was scheduled to get more variations of the voices.
+- Six calls had to be done with a mobile phone alternating indoor and outdoor to obtain different recording environments.
+- The utterances were stored on the application server as 8 bit, 8 kHz, A-law.
+
+- All in all we collected 65364 single utterances.
+- They were in average of 2.58 seconds duration, all in all
+
+
+- Of those, we selected for each of the seven classes randomly 25 speakers as a fixed test set (17332 utterances, 12.45 hours) and the other 770 speakers as a training set (53076 utterances, 38.16 hours).
+
