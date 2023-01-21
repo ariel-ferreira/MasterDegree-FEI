@@ -1,0 +1,261 @@
+%%%% -- Metadados para aderência ao padrão PDF/A
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{filecontents*}{\jobname.xmpdata}
+\Title {Estimativa de Faixa Etária Pela Voz Utilizando Deep Learning}
+\Author {Ariel Graça Ferreira}
+\Copyright {Copyright \copyright\ 2023 "Ariel Graça Ferreira"}
+\Keywords {Fala\sep Voz\sep Faixa Etária\sep Redes Neurais\sep Convolucionais}
+\Language {pt-BR}
+%\Subject {No decorrer dos últimos anos tem sido possível acompanhar a expansão e popularização do conceito de Internet das Coisas, onde os mais diversos objetos do cotidiano estão sendo interconectados. De forma similar, o progresso na área de Inteligência Artificial tem proporcionado uma interação cada vez maior entre as pessoas e esses objetos, formando assim uma grande rede que tende a crescer, e se desenvolver, cada vez mais. Visando o avanço tecnológico dentro desse contexto, é imprescindível que se busque uma interação homem-máquina mais refinada, e um dos principais meios para estabelecer tal interação é a voz humana. O presente trabalho propõem estudar os sistemas de estimação automática de faixa etária pela voz com Redes Neurais Convolucionais (RNC's), porém não é proposta apenas a busca pela compreensão e melhorias na arquitetura desse tipo de modelo, mas de se fazer também um contraponto com modelos mais tradicionais, que utilizem outras técnicas, como por exemplo Gaussian Mixture Models (GMM). Nos ensaios iniciais realizados com uma RNC, o modelo apresentou precisão de 60\%, aproximadamente, e a partir desses resultados deve-se desenvolver o estudo proposto.}
+\end{filecontents*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[acronym,symbols]{fei}
+\usepackage[utf8]{inputenc}
+%\setlength {\marginparwidth }{2cm}
+\usepackage[colorinlistoftodos]{todonotes}
+%\usepackage[textwidth=3.7cm]{todonotes}
+\presetkeys{todonotes}{size=\tiny, color=blue!30}{}
+
+%%%% -- Configuracoes Iniciais
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\author{Ariel Graça Ferreira}
+\cidade{São Bernardo do Campo}
+\instituicao{Centro Universitário da FEI}
+\title{Estimativa de Faixa Etária Pela Voz Utilizando Deep Learning}
+
+% comando para inserção de subfloats do tipo figure, usado aqui no template
+% remova este comando se for usar o pacote subfig
+% não recomendo o pacote subcaption
+%\newsubfloat{figure}
+
+%\subtitulo{subtítulo}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% -- Entradas Listas de Abreviaturas e Simbolos
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% -- Abreviaturas
+%\newacronym[user1=Computational Aided Design]{cad}{CAD}{Desenho assistido por computador}
+\newacronym{fei}{FEI}{Centro Universitário da FEI}
+
+%% -- Simbolos
+\newglossaryentry{A}{type=symbols,name={\ensuremath{A}},sort=a,description={exchanger total heat transfer area, $m^2$}}
+\newglossaryentry{G}{type=symbols,name={\ensuremath{G}},sort=g,description={exchanger flow-stream mass velocity, $kg/(s m^2)$}}
+\newglossaryentry{f}{type=symbols,name={\ensuremath{j}},sort=j,description={friction factor, dimensionless}}
+\newglossaryentry{deltap}{type=symbols,name={\ensuremath{\Delta P}},sort=p,description={pressure drop, $Pa$}}
+\newglossaryentry{nu}{type=symbols,name={\ensuremath{\nu}},sort=b,description={specific volume, $m^3/kg$}}
+\newglossaryentry{beta}{type=symbols,name={\ensuremath{\beta}},sort=b,description={ratio of free-flow area $A_{ff}$ and frontal area $A_{fr}$ of one side of exchanger, dimensionless}}
+\newglossaryentry{fr}{type=symbols,name={\ensuremath{fr}},sort=fr,description={frontal}}
+\newglossaryentry{in}{type=symbols,name={\ensuremath{i}},sort=in,description={inlet}}
+\newglossaryentry{out}{type=symbols,name={\ensuremath{o}},sort=out,description={outlet}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\addbibresource{referencias.bib}
+
+\makeindex
+
+\makeglossaries
+
+\begin{document}
+
+\maketitle
+
+\begin{folhaderosto}
+Dissertação de Mestrado, apresentada ao Centro Universitário da FEI para obtenção do título de Mestre em Engenharia Elétrica. Orientado pelo Prof. Dr. Carlos Eduardo Thomaz.
+\end{folhaderosto}
+
+\fichacatalografica
+
+\folhadeaprovacao
+
+\dedicatoria{A minha esposa, foram 10 anoz de muita paciência, abnegação e encorajamento. Aos meus familiares, e todos que me ajudaram, inclusive meu cachorro.}
+
+\begin{agradecimentos}
+Criar texto...
+\end{agradecimentos}
+
+\begin{epigrafe}
+	\epig{Faça as coisas o mais simples possível, mas não mais simples.}{Albert Einstein}
+	\epig{Inteligência é a capacidade de se adaptar à mudança.}{Stephen Hawking}
+\end{epigrafe}
+
+\begin{resumo}
+  \todo{Revisar e reescrever o resumo quando o trabalho estiver finalizado.}
+  No decorrer dos últimos anos tem sido possível acompanhar a expansão e popularização do conceito de Internet das Coisas, onde os mais diversos objetos do cotidiano estão sendo interconectados. De forma similar, o progresso na área de Inteligência Artificial tem proporcionado uma interação cada vez maior entre as pessoas e esses objetos, formando assim uma grande rede que tende a crescer, e se desenvolver, cada vez mais. Visando o avanço tecnológico dentro desse contexto, é imprescindível que se busque uma interação homem-máquina mais refinada, e um dos principais meios para estabelecer tal interação é a voz humana. O presente trabalho propõem estudar os sistemas de estimação automática de faixa etária pela voz com Redes Neurais Convolucionais (RNC's), porém não é proposta apenas a busca pela compreensão e melhorias na arquitetura desse tipo de modelo, mas de se fazer também um contraponto com modelos mais tradicionais, que utilizem outras técnicas, como por exemplo Gaussian Mixture Models (GMM). Nos ensaios iniciais realizados com uma RNC, o modelo apresentou precisão de 60\%, aproximadamente, e a partir desses resultados deve-se desenvolver o estudo proposto.
+\palavraschave{Processamento de Sinais. Redes Neurais. Redes Profundas. Redes Convolucionais. Fala. Voz. Faixa etária.}
+\end{resumo}
+
+\begin{abstract}
+  \todo{Traduzir o resumo assim que ele for finalizado.}
+  \keywords{}
+\end{abstract}
+
+\listoftodos
+\listoffigures
+\listoftables
+\listofalgorithms
+\printglossaries
+\tableofcontents
+
+\chapter{Introdução}
+
+Com o advento das tecnologias baseadas em Inteligência Artificial (IA), aliado a evolução científica e produção acadêmica das últimas décadas, é notável o estímulo que existe na sociedade a fim de criar e aperfeiçoar a interação homem-máquina, revolucionando assoim a forma como os indivíduos realizam atividades, sejam elas cotidianas, corriqueiras, ou com propósitos mais complexos.   
+
+A estimação de faixa etária pela voz, possui diversas aplicações que visam criar uma interface homem-máquina para utilização em áreas como transporte, segurança, medicina e automação residencial.
+
+Um exemplo bastante presente no cotidiano das pessoas atualmente, seriam as Inteligências Artificiais (IA) como a \textit{Alexa}, desenvolvida pela Amazon, e o \textit{Google Assistant}, criado pelo Google.
+São dispositivos espalhados em milhares de casas ao redor do mundo, e que recebem os mais diversos comandos de voz para execução de várias tarefas, que podem ser desde tocar uma música, até realizar uma complexa rotina de acionamento em conjunto com outros elementos e/ou equipamentos inteligentes, interconectados e espalhados pela casa de um indivíduo, ou fora dela. Para citar apenas uma aplicação, a estimação de faixa etária poderia funcionar como uma validação de segurança, evitando assim acesso ou acionamento indevido por alguma criança que tenha acesso ao dispositivo mas não possa ter acesso a todas as funcionalidades disponíveis.  
+
+Tomando como base esse cenário de crescimento tecnológico e expansão das aplicações de \textit{Internet of Things} (IoT) e IA, este trabalho tem por finalidade estudar os sistemas de estimação de faixa etária por sinais de voz que utilizem técnicas de aprendizado profundo, como Redes Neurais Convolucionais (RNC). Busca-se entender e mostrar evidências do desempenho desse tipo de sistema, considerando a utilização de tais técnicas.
+
+Através do sinal da voz de um indivíduo, é possível obter muitas informações sobre quem produz o som, como gênero, emoções e idade, porém essa tarefa também traz desafios. A incidência de distorções na fonte do sinal, geradas pelo próprio indivíduo (estado de saúde, emoção), ou geradas pelo ambiente (ruído externo), deformam o sinal de tal forma que a etapa de extração das características acústicas (\textit{features}) fica prejudicada e, consequentemente, a etapa seguinte, a classificação do dado, também vai sofrer com a degradação.
+
+Nesse sentido, as técnicas de aprendizado de máquina, mais especificamente aprendizado profundo, com base em pesquisas realizadas na literatura atual, mostram-se mais robustas para implementação desse tipo de sistemas que trabalham com sinais acústicos. Por tal razão, este trabalho busca estudar e avaliar a utilização de RNC's no problema de estimação automática de idade pela voz.
+
+Para  efeitos de comparação e posterior análise dos resultados, será utilizado como referência a pesquisa FAPESP desenvolvida pelo Prof. Dr. Ivandro, que utiliza técnicas mais tradicionais de aprendizado de máquina, como o Gaussian Mixture Models (GMM) e i-Vector. Visto que essa pesquisa faz uso do mesmo banco de dados que será utilizado no desenvolvimento do presente trabalho com redes neurais, haverá oportunidade de comparar e discutir os resultados obtidos com ambos os sistemas.
+
+Em relação ao banco de dados, será adotado um corpus com sinais de chamadas telefônicas que pertence a \textit{Deutsche Telekom Laboratories}, de Berlim na Alemanha.
+
+\section{Objetivos}
+
+\chapter{Revisão Bibliográfica}
+
+\chapter{Metodologia}
+
+\todo{Colocar algum texto aqui\ldots}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Estimação Automática de Faixa Etária pelo Processamento do Sinal de Voz}
+
+\todo[noline]{O quanto preciso detalhar a metodologia e outras informações sobre o trabalho do prof. Ivandro}
+
+Dois Relatórios Científicos que compõem uma pesquisa realizada pelo Prof. Dr. Ivandro Sanches em \citeonline{IvandroRel1, IvandroRel2}, foram utilizados como ponto de partida para este trabalho.
+Ele investiga e faz a análise das capacidades de estimação de faixa etária de um certo indivíduo utilizando o modelo estatístico Gaussian Mixture Model (GMM) e a técnica de i-vector.
+O modelo é alimentado por vetores que representam cada sinal e são compostos por coeficientes mel-cepstrais (MFCC) obtidos a partir da decomposição da fala.
+Tais vetores podem ser representados da seguinte forma:
+
+\[ X = \{X_{1},X_{2},...,X_{T}\} \]
+
+O vetor acima é formado da concatenação de outros vetores que, por sua vez, são compostos por 39 coeficientes.
+O número total de elementos de X se dá em função da duração de cada sinal de voz, pois cada vetor de 39 elementos corresponde a um trecho de 20 a 30 ms do sinal com sobreposições de 10 a 15 ms. 
+
+Considerando então X como a representação discreta do sinal de fala de um determinado indivíduo, e \textit{s} como cada uma das faixas etárias possíveis, a classificação é feita através do seguinte teste de hipótese:
+
+\[H_{0} : X corresponde à faixa etária \textit{s}\]
+\[H_{1} : X não corresponde à faixa etária \textit{s}\]
+
+O modelo realiza apenas a classificação dos dados. A extração das características acústicas, ou seja, a criação dos vetores que alimentam o sistema, é realizada utilizando-se uma ferramenta chamada HTK Tool, ferramenta essa que decompõe o sinal de voz em vetores coeficientes  e com base nos 
+Na primeira parte do trabalho, utilizou-se 
+
+No decorrer do trabalho, é implementado o algoritmo de Viterbi para extimação do \textit{pitch} do sinal analisado, e tal informação é adicionado \todo{revisar esse trecho} ao conjunto de características acústicas. 
+
+Utiliza-se ainda a estimação de , através do algoritmo de Viterbi, para conferir maior robustez ao sistema. O pitch é a frequência de vibração das cordas vocais durante a produção da voz, e funciona como parâmetro biométrico pois seu valor médio é função, por exemplo, do gênero e idade do indivíduo. Ao agregar o valor do pitch ao vetor de dados a ser processado, tem-se dados mais robustos para reforçar o padrão que precisa ser definido.
+
+Nesse trabalho, foram realizados três tipos de experimentos conforme descrito a seguir:
+
+\begin{itemize}
+    \item Exp 01: todo o sinal de voz de cada arquivo de áudio será processado e usado nos processos de treino, adaptação e teste
+    \item Exp 02: apenas os quadros em que ocorre vibração das cordas vocais de cada arquivo de áudio serão processados.
+    \item Exp 03: apenas os quadros em que ocorre vibração das cordas vocais de cada arquivo de áudio serão processados e, adicionalmente, o valor estimado de pitch será adicionado ao vetor de padrões do quadro correspondente.
+\end{itemize}
+
+A seguir, serão compartilhados alguns dos resultados obtidos. Os valores indicados, se referem a ensaios realizados com base de treinamento e teste distintas, que ao todo somam \textbf{20492} arquivos de áudio. 
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{r|lr}
+ & GMM & i-vector \\
+\hline
+Exp 01 & 41.4 & 46.4 \\
+Exp 02 & 44.5 & 46.4 \\
+Exp 03 & 48.0 & 47.8 
+\end{tabular}
+\caption{Resultados globais em porcentagem de acerto.}
+\end{table}
+\FloatBarrier
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ c c | c c c c c c c}
+\multicolumn{9}{c}{estimado} \\
+ & & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
+\hline
+\multirow{7}{*}{real} & 1 & \textbf{1354} & 467 & 155 & 192 & 29 & 122 & 69 \\
+& 2 & 510 & \textbf{1398} & 24 & 544 & 10 & 303 & 14 \\
+& 3 & 4 & 12 & \textbf{949} & 33 & 583 & 65 & 454 \\
+& 4 & 155 & 944 & 48 & \textbf{1263} & 19 & 907 & 13 \\
+& 5 & 2 & 4 & 681 & 21 & \textbf{901} & 62 & 895 \\
+& 6 & 221 & 559 & 32 & 947 & 17 & \textbf{1663} & 37 \\
+& 7 & 7 & 4 & 400 & 42 & 920 & 120 & \textbf{2317}  
+\end{tabular}
+\caption{Matriz de confusão referente ao Exp 03, considerando GMM.}
+\end{table}
+\FloatBarrier
+
+Considerando apenas os quatro grupos etários (crianças, jovens, adultos, sêniores), a taxa de acerto obtida foi de 49.2\%.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ c c | c c c c }
+\multicolumn{6}{c}{estimado} \\
+ & & criança & jovem & adulto & sênior \\
+\hline
+\multirow{4}{*}{real} & criança & \textbf{1354} & 622 & 221 & 191 \\
+& jovem & 514 & \textbf{2383} & 1170 & 836 \\
+& adulto & 157 & 1677 & \textbf{2204} & 1877 \\
+& sênior & 228 & 995 & 1926 & \textbf{4137} 
+\end{tabular}
+\caption{Matriz de confusão referente ao Exp 03, considerando GMM e quatro grupos etários.}
+\end{table}
+\FloatBarrier
+
+Somatória dos valores da diagonal principal: 10078.
+
+\[
+    \frac{10078}{20492} x 100\% = 49.2\%
+.\]
+
+Considerando apenas três grupos (crianças, homens e mulheres), a taxa de acerto obtida foi de 87.8\%.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ c c | c c c }
+\multicolumn{5}{c}{estimado} \\
+ & & crianças & mulheres & homens \\
+\hline
+\multirow{3}{*}{real} & crianças & \textbf{1354} & 78 & 253\\
+& mulheres & 886 & \textbf{8528} & 214 \\
+& homens & 13 & 363 & \textbf{8100}
+\end{tabular}
+\caption{Matriz de confusão referente ao Exp 03, considerando GMM e três grupos etários.}
+\end{table}
+\FloatBarrier
+
+Somatória dos valores da diagonal principal: 17982.
+
+\[
+    \frac{17982}{20492} x 100\% = 87.8\%
+.\]
+
+Pretende-se realizar ensaios similares e adicionais com o sistema utilizando a RNC e então comparar os resultados para posterior discussão. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Banco de Dados}
+\section{Redes Neurais Convolucionais}
+\section{Redes Neurais Convolucionais - SincNet}\todo{Reavaliar o título dessa seção}
+
+
+\chapter{Resultados e Discussão}
+\chapter{Conclusão}
+\chapter{Pesquisas Futuras}
+
+\printbibliography
+
+\printindex
+
+\end{document}
