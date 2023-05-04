@@ -8,10 +8,10 @@ import tensorflow as tf
 from tensorflow import keras
 import random
 
-DATASET_ROOT = os.path.join(os.path.expanduser("~"),'dataSet/audio/agender_distribution/')
+DATASET_ROOT = '/home/'
 NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
 
-VALID_SPLIT = 0.10
+VALID_SPLIT = 0.75
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
