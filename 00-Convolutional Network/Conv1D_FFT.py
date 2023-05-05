@@ -9,18 +9,18 @@ from tensorflow import keras
 import random
 
 DATASET_ROOT = '/home/'
-NETWORK_ROOT = os.path.join(os.path.expanduser("~"),'Mestrado-PC/github/Conv1D/CNN/')
+NETWORK_ROOT = '/home/MasterDegree-FEI/00-Convolutional Network/'
 
 VALID_SPLIT = 0.75
 SAMPLING_RATE = 8000
 SHUFFLE_SEED = 43
 BATCH_SIZE = 128
 EPOCHS = 100
-qtd_class = 3
+qtd_class = 4
 timestamp = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-train_file_list_path = 'file_lists/3-classes/train_database_full.csv'
-test_file_list_path = 'file_lists/3-classes/test_database_full.csv'
+train_file_list_path = 'file_lists/4-classes/train_database_full.csv'
+test_file_list_path = 'file_lists/4-classes/test_database_full.csv'
 
 def paths_and_labels_to_dataset(audio_paths, labels):
     # Constructs a dataset of audios and labels
@@ -63,35 +63,63 @@ print("Found {} files belonging to {} classes.".format(len(audio_paths), len(cla
 for i in range(len(audio_paths)):
     audio_paths[i] = os.path.join(DATASET_ROOT, audio_paths[i])
 
-# Shuffle
-
 rng = np.random.RandomState(SHUFFLE_SEED)
 rng.shuffle(audio_paths)
 rng = np.random.RandomState(SHUFFLE_SEED)
 rng.shuffle(labels)
 
-# Split into training and validation
+train_audio_paths = audio_paths
+train_labels = labels
 
-num_val_samples = int(VALID_SPLIT * len(audio_paths))
+# Read train files and split class from file
 
-qtd_files_training = len(audio_paths) - num_val_samples
+test_audio_files = test_file_list['file']
+test_classes = test_file_list['class']
+
+test_class_labels = list(test_classes.unique())
+print("Age categories identified: {}".format(test_classes,))
+
+test_audio_paths = list(test_audio_files)
+test_labels = list(test_classes)
+
+print("Found {} files belonging to {} classes.".format(len(test_audio_paths), len(tes_class_labels)))
+
+for i in range(len(test_audio_paths)):
+    test_audio_paths[i] = os.path.join(DATASET_ROOT, test_audio_paths[i])
+
+rng = np.random.RandomState(SHUFFLE_SEED)
+rng.shuffle(test_audio_paths)
+rng = np.random.RandomState(SHUFFLE_SEED)
+rng.shuffle(test_labels)
+    
+qtd_files_testing = len(test_audio_paths)
+
+print("Using {} files belonging to {} classes.".format(qtd_files_testing, len(test_class_labels)))
+
+# Split into test and validation
+
+num_val_samples = int(VALID_SPLIT * len(test_audio_paths))
+
+qtd_files_training = len(test_audio_paths) - num_val_samples
 qtd_files_validation = num_val_samples
 
-print("Using {} files for training.".format(len(audio_paths) - num_val_samples))
+print("Using {} files for training.".format(len(test_audio_paths) - num_val_samples))
 print("Using {} files for validation.".format(num_val_samples))
 
-train_audio_paths = audio_paths[:-num_val_samples]
-train_labels = labels[:-num_val_samples]
-valid_audio_paths = audio_paths[-num_val_samples:]
+test_audio_paths = test_audio_paths[:-num_val_samples]
+test_labels = labels[:-num_val_samples]
+valid_audio_paths = test_audio_paths[-num_val_samples:]
 valid_labels = labels[-num_val_samples:]
 
-# Create 2 datasets, one for training and the other for validation
+# Create 3 datasets, one for training, one for validation, and one for testing
 
 train_ds = paths_and_labels_to_dataset(train_audio_paths, train_labels)
 valid_ds = paths_and_labels_to_dataset(valid_audio_paths, valid_labels)
+test_ds = paths_and_labels_to_dataset(test_audio_paths, valid_labels)
 
 train_ds = train_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
-valid_ds = valid_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
+valid_ds = valid_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED).batch(BATCH_SIZE)
+test_ds = test_ds.shuffle(buffer_size=32 * 8, seed=SHUFFLE_SEED).batch(32)
 
 # Transform audio wave to the frequency domain
 
@@ -137,7 +165,6 @@ def build_model(input_shape, num_classes):
         num_classes, activation="softmax", name="output")(x)
 
     return keras.models.Model(inputs=inputs, outputs=outputs)
-
 
 model = build_model((SAMPLING_RATE // 2, 1), len(class_labels))
 
@@ -226,41 +253,16 @@ print(model_evaluate)
 
 # TESTING
 
-'''model_folder = "simulations/model_FFT_E100_B128_20220911-045418/"
+'''
+model_folder = "simulations/model_FFT_E100_B128_20220911-045418/"
 model_name = "model.h5"
 
-model = keras.models.load_model(os.path.join(NETWORK_ROOT, model_folder + model_name))'''
-
-# test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path))
+model = keras.models.load_model(os.path.join(NETWORK_ROOT, model_folder + model_name))
 
 p = 0.25  # 25% of the lines
 # keep the header, then take only p*100% of lines from the source csv file
 test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path), header=0, skiprows=lambda i: i>0 and random.random() > p)
-
-test_audio_files = test_file_list['file']
-test_classes = test_file_list['class']
-
-test_class_labels = list(test_classes.unique())
-print("Age categories identified: {}".format(test_classes,))
-
-test_audio_paths = list(test_audio_files)
-test_labels = list(test_classes)
-
-rng = np.random.RandomState(SHUFFLE_SEED)
-rng.shuffle(test_audio_paths)
-rng = np.random.RandomState(SHUFFLE_SEED)
-rng.shuffle(test_labels)
-
-for i in range(len(test_audio_paths)):
-    test_audio_paths[i] = os.path.join(DATASET_ROOT, test_audio_paths[i])
-
-qtd_files_testing = len(test_audio_paths)
-
-print("Using {} files belonging to {} classes.".format(qtd_files_testing, len(test_class_labels)))
-
-test_ds = paths_and_labels_to_dataset(test_audio_paths, test_labels)
-
-test_ds = test_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED, reshuffle_each_iteration=False).batch(BATCH_SIZE)
+'''
 
 y_true = []
 y_predicted = []
@@ -290,12 +292,6 @@ else:
 
 perc_corr_predict = (correct_predict*100)/r
 
-'''test_records = os.path.join(NETWORK_ROOT, model_folder + timestamp + "test_records_from_saved_model.txt")
-
-file = open(test_records,'a+')
-file.write("Teste do modelo - resultado: "+"\n")
-file.write("A porcentagem de acerto é de: "+str((correct_predict*100)/r)+"%")'''
-
 metric_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"metrics.txt")
 
 file = open(metric_records,'a+')
@@ -309,10 +305,5 @@ file.write("Precisão: "+str(acc)+'\n')
 file.write("Loss: "+str(loss)+'\n')
 file.write("Precisão_val: "+str(val_acc)+'\n')
 file.write("Loss_val: "+str(val_loss)+'\n')
-
-
-test_records = os.path.join(NETWORK_ROOT, "simulations/model_FFT_"+str(qtd_class)+"_E"+str(EPOCHS)+"_B"+str(BATCH_SIZE)+"_"+timestamp+"/"+"test_records.txt")
-
-file = open(test_records,'a+')
 file.write("Teste do modelo - resultado: "+"\n")
 file.write("A porcentagem de acerto é de: "+str(perc_corr_predict)+"%")
