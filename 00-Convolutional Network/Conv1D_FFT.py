@@ -53,12 +53,12 @@ train_audio_files = train_file_list['file']
 train_classes = train_file_list['class']
 
 class_labels = list(train_classes.unique())
-print("Age categories identified: {}".format(train_classes,))
+print("Train - Age categories identified: {}".format(train_classes,))
 
 audio_paths = list(train_audio_files)
 labels = list(train_classes)
 
-print("Found {} files belonging to {} classes.".format(len(audio_paths), len(class_labels)))
+print("Train - Found {} files belonging to {} classes.".format(len(audio_paths), len(class_labels)))
 
 for i in range(len(audio_paths)):
     audio_paths[i] = os.path.join(DATASET_ROOT, audio_paths[i])
@@ -73,16 +73,17 @@ train_labels = labels
 
 # Read train files and split class from file
 
+test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path))
 test_audio_files = test_file_list['file']
 test_classes = test_file_list['class']
 
 test_class_labels = list(test_classes.unique())
-print("Age categories identified: {}".format(test_classes,))
+print("Test & Val - Age categories identified: {}".format(test_classes,))
 
 test_audio_paths = list(test_audio_files)
 test_labels = list(test_classes)
 
-print("Found {} files belonging to {} classes.".format(len(test_audio_paths), len(tes_class_labels)))
+print("Test & Val - Found {} files belonging to {} classes.".format(len(test_audio_paths), len(test_class_labels)))
 
 for i in range(len(test_audio_paths)):
     test_audio_paths[i] = os.path.join(DATASET_ROOT, test_audio_paths[i])
@@ -267,6 +268,8 @@ test_file_list = pd.read_csv(os.path.join(NETWORK_ROOT, test_file_list_path), he
 y_true = []
 y_predicted = []
 
+start_test = time.time()
+
 for audios, labels in test_ds:
     ffts = audio_to_fft(audios)
     y_pred = model.predict(ffts)
@@ -289,6 +292,8 @@ if r == p:
             correct_predict += 1
 else:
     print("Error - length of real and predicted vectors does not match!")
+
+end_test = (time.time() - start_test)/60
 
 perc_corr_predict = (correct_predict*100)/r
 
